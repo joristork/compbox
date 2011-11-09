@@ -6,7 +6,7 @@
 
 \usepackage[pdfborder={0 0 0}]{hyperref} % No we dont want our links to have stupid colors.
 \usepackage[english]{babel}
-
+\usepackage{graphicx}
 
 %
 %  Front page stuff
@@ -23,7 +23,16 @@
 \begin{document}
 \maketitle
 \chapter{Introduction}
+
 \chapter{Design}
+
+\begin{figure}[h]
+\centering
+\includegraphics[viewport= 170 90 510 490, clip=true]{diagram}
+\caption{Optimizer design diagram.}
+\label{fig:diagram}
+\end{figure}
+
 \chapter{Implementation}
 \chapter{Benchmarks}
 \appendix
