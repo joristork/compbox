@@ -12,6 +12,21 @@ import sys
 # Our own optimizer modules:
 # import modules
 
+class Op(object):
+    """
+    Op represents one assembly expression.
+
+    This expression has an instruction, arguments and a line number.
+
+    Tasks:
+     - give instruction type (control, load/store, integer, floating-point, miscellaneous);
+     - give arguments;
+     - convert expression to Op instance;
+     - convert Op instance back to expression.
+    """
+    def __init__(self, expr):
+        pass
+
 class Block(object):
     """
     Block acts as a node in the graph that Graph represents. Nodes represent a
