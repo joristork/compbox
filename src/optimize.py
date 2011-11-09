@@ -14,7 +14,7 @@ import sys
 
 class Block(object):
     """
-    Block acts as nodes in the graph that Graph represents. Nodes represents a
+    Block acts as a node in the graph that Graph represents. Nodes represent a
     piece of assembly with a single entry point and a single exit point.
 
     Tasks:
