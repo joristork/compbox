@@ -24,8 +24,12 @@ class Op(object):
      - convert expression to Op instance;
      - convert Op instance back to expression.
     """
+    
     def __init__(self, expr):
-        pass
+        self.expr = expr
+
+    def __repr__(self):
+        return 'Op(%r)' % self.expr
 
 class Block(object):
     """
@@ -38,7 +42,12 @@ class Block(object):
      - give/change blocks that this block points to.
     """
 
-    pass
+    def __init__(self, lines, in_block):
+        self.lines = [Op(line) for line in lines]
+        self.in_block = in_block
+
+    def __repr__(self):
+        return 'Block(%r)' % self.lines
 
 class Graph(object):
     """
@@ -52,7 +61,11 @@ class Graph(object):
      - give list of blocks.
     """
     
-    pass
+    def __init__(self, lines):
+        self.blocks = [Block(lines, None),] # just an example; is wrong.
+
+    def __repr__(self):
+        return  'Graph(%r)' % self.blocks
 
 class Optimizer(object):
     """
@@ -64,12 +77,23 @@ class Optimizer(object):
      - convert IR back to source.
     """
     
-    pass
+    def __init__(self, lines):
+        self.graph = Graph(lines)
+        print 'Optimizer\nsource: %s' % lines
+        print 'graph: %s' % self.graph
 
 def main():
     """
     Parse command line options, initiliaze Optimizer and run optimizations.
     """
+
+    # Use plain sys.argv[1] for now. optparse is for later.
+    if len(sys.argv) != 2:
+        print "argument expected"
+        return
+    sourcefile = open(sys.argv[1], 'r')
+    opt = Optimizer(sourcefile.readlines())
+    sourcefile.close()
 
 if __name__ == '__main__':
     main()
