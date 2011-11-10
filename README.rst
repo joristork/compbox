@@ -1,9 +1,13 @@
 Peephole optimizer
 ==================
 
-The stuff in tools/ is from /home/spolstra/vertalerbouw/. See
-http://staff.science.uva.nl/~andy/compiler/prac.html for details.
+Notities
+--------
 
-Handy links
------------
+De map ``\bechmarks`` bevat de c-source voor de benchmarks.
+
+De tools in ``/home/spolstra/vertalerbouw/`` werken alleen vanuit die locatie.
+
+Links
+-----
 Assignment: http://staff.science.uva.nl/~andy/compiler/prac.html
