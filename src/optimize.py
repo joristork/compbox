@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 #
-# optimize.py
+# optimise.py
 #
 
 import sys
@@ -9,7 +9,7 @@ import sys
 # Option parsing module:
 # from optparse import OptionParser
 
-# Our own optimizer modules:
+# Our own Optimiser modules:
 # import modules
 
 class Op(object):
@@ -23,6 +23,7 @@ class Op(object):
      - give arguments;
      - convert expression to Op instance;
      - convert Op instance back to expression.
+
     """
     
     def __init__(self, expr):
@@ -30,6 +31,7 @@ class Op(object):
 
     def __repr__(self):
         return 'Op(%r)' % self.expr
+
 
 class Block(object):
     """
@@ -40,6 +42,7 @@ class Block(object):
      - give/change code lines;
      - give/change blocks pointing to this block;
      - give/change blocks that this block points to.
+
     """
 
     def __init__(self, lines, in_block):
@@ -49,9 +52,10 @@ class Block(object):
     def __repr__(self):
         return 'Block(%r)' % self.lines
 
+
 class Graph(object):
     """
-    Intermediate representation (IR) of source code in the peephole optimizer.
+    Intermediate representation (IR) of source code in the peephole Optimiser.
 
     The nodes of the graph are Block s.
 
@@ -59,6 +63,7 @@ class Graph(object):
      - convert assembly to Graph;
      - convert graph to assembly;
      - give list of blocks.
+
     """
     
     def __init__(self, lines):
@@ -67,33 +72,35 @@ class Graph(object):
     def __repr__(self):
         return  'Graph(%r)' % self.blocks
 
-class Optimizer(object):
+
+class Optimiser(object):
     """
-    Main optimizer.
+    Main Optimiser.
 
     Tasks
      - convert source to IR;
-     - let optimizer modules optimize the IR;
+     - let Optimiser modules optimise the IR;
      - convert IR back to source.
+
     """
     
     def __init__(self, lines):
         self.graph = Graph(lines)
-        print 'Optimizer\nsource: %s' % lines
+        print 'Optimiser\nsource: %s' % lines
         print 'graph: %s' % self.graph
 
+
 def main():
-    """
-    Parse command line options, initiliaze Optimizer and run optimizations.
-    """
+    """ Parse command line args, init. optimiser and run optimisations. """
 
     # Use plain sys.argv[1] for now. optparse is for later.
     if len(sys.argv) != 2:
         print "argument expected"
         return
     sourcefile = open(sys.argv[1], 'r')
-    opt = Optimizer(sourcefile.readlines())
+    opt = Optimiser(sourcefile.readlines())
     sourcefile.close()
+
 
 if __name__ == '__main__':
     main()
