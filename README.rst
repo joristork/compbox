@@ -4,7 +4,7 @@ Peephole optimizer
 Notities
 --------
 
-De map ``\bechmarks`` bevat de c-source voor de benchmarks.
+De map ``bechmarks/`` bevat de c-source voor de benchmarks.
 
 De tools in ``/home/spolstra/vertalerbouw/`` werken alleen vanuit die locatie.
 
