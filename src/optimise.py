@@ -33,9 +33,19 @@ class Op(object):
         self.expr = expr
         self.destinations = []
         self.leader = False
+        self.type = None
+        self.args = []
 
     def __repr__(self):
         return 'Op(%r)' % self.expr
+
+    def parse(self, expr):
+        pattern = re.compile('[\s,]+')
+        expr_elements = pattern.split(expr.lstrip(' ,'))
+        self.type = expr_elements[0]
+        if expr_elements[0].startswith("B"):
+            offset = int(expr_elements[-1])
+            self.destinations.append(offset + self.original_line_nr)
 
 
 class Block(object):
@@ -96,7 +106,7 @@ class Graph(object):
                 op_list = []
             if op in destinations:
                 if op_list:
-                    blocks.append(Block(op_list)
+                    blocks.append(Block(op_list))
                 op_list = [op]
             else:
                 op_list.append(op)
