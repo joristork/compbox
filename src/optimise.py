@@ -27,7 +27,12 @@ class Op(object):
     """
     
     def __init__(self, expr):
+        self.previous_line = None
+        self.next_line = None
+        self.original_line_nr = None
         self.expr = expr
+        self.destinations = []
+        self.leader = False
 
     def __repr__(self):
         return 'Op(%r)' % self.expr
@@ -65,9 +70,36 @@ class Graph(object):
      - give list of blocks.
 
     """
-    
+
     def __init__(self, lines):
         self.blocks = [Block(lines, None),] # just an example; is wrong.
+
+
+    def assembly_to_graph(lines): 
+        """   """
+        ops = []
+        destinations = []
+        blocks = []
+
+        for index, line in enumerate(lines):
+            ops.append(Op(line))
+            ops[index].original_line_nr = index
+        for index, op in enumerate(ops):
+            for dest_index in op.destination_indices:
+                op.destinations.append(ops[dest_index])
+            destinations.extend(op.destinations)
+        op_list = []
+        for op in ops:
+            if op.destinations:
+                op_list.append(op)
+                blocks.append(Block(op_list))
+                op_list = []
+            if op in destinations:
+                if op_list:
+                    blocks.append(Block(op_list)
+                op_list = [op]
+            else:
+                op_list.append(op)
 
     def __repr__(self):
         return  'Graph(%r)' % self.blocks
