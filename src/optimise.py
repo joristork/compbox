@@ -60,12 +60,36 @@ class Block(object):
 
     """
 
-    def __init__(self, lines, in_block):
-        self.lines = [Op(line) for line in lines]
-        self.in_block = in_block
+    block_id = -1
 
+    def __init__(self, block_id=None, ops=None, out=None):
+        if not block_id:
+            Block.block_id += 1
+            self.block_id = Block.block_id
+        elif block_id == 'entry':
+            self.block_id='entry'
+            Block.block_id = -1
+        elif block_id == 'exit':
+            self.block_id = 'exit'
+        else:
+            self.block_id = block_id
+            Block.block_id = block_id
+        self.ops = []
+        self.next = None
+        self.jump = None
+
+    def __str__(self):
+        next_block_id = self.next.block_id if self.next else None
+        jump_block_id = self.jump.block_id if self.jump else None
+        return 'Block(%s, %s, next=%s, jump=%s)' % (self.block_id, self.ops, next_block_id, jump_block_id)
+        
     def __repr__(self):
-        return 'Block(%r)' % self.lines
+        return '<Block id=%s>' % str(self.block_id)
+
+    def append(self, op):
+        self.ops.append(op)
+        op.block = self
+
 
 
 class Graph(object):
@@ -81,38 +105,82 @@ class Graph(object):
 
     """
 
-    def __init__(self, lines):
-        self.blocks = [Block(lines, None),] # just an example; is wrong.
+    entry_block = Block('entry')
+    exit_block = Block('exit')
 
+    def __init__(self, lines, op_class=Op):
 
-    def assembly_to_graph(lines): 
-        """   """
-        ops = []
-        destinations = []
-        blocks = []
+        self.blocks = []
+        self.OpClass = op_class # we can change this class for testing purposes
+        
+        self.assembly_to_graph(lines)
+        
+        
 
-        for index, line in enumerate(lines):
-            ops.append(Op(line))
-            ops[index].original_line_nr = index
-        for index, op in enumerate(ops):
-            for dest_index in op.destination_indices:
-                op.destinations.append(ops[dest_index])
-            destinations.extend(op.destinations)
-        op_list = []
-        for op in ops:
-            if op.destinations:
-                op_list.append(op)
-                blocks.append(Block(op_list))
-                op_list = []
-            if op in destinations:
-                if op_list:
-                    blocks.append(Block(op_list))
-                op_list = [op]
+    def assembly_to_graph(self, lines):
+        ops  = []
+        leaders = []
+        jumps = {}
+        nexts = {}
+
+        if not lines:
+            return
+          
+        # create ops
+        for line in lines:
+            ops.append(self.OpClass(line))
+
+        # find leaders and jump destinations
+        for index, op in enumerate(ops): 
+            if op.type == 'control':
+                jump_target_index = op.get_jump_target_index(index)
+                if jump_target_index < len(ops):
+                    leaders.append(ops[op.get_jump_target_index(index)])
+                    jumps[op] = ops[jump_target_index]
+                else:
+                    jumps[op] = None # (jumps to exit block)
+                if index+1 < len(ops):
+                    leaders.append(ops[index + 1])
+
+            if index+1 < len(ops):
+                nexts[op] = ops[index+1] # TODO: if jump is uncoditional, there is no next.
             else:
-                op_list.append(op)
+                nexts[op] = None # (next is exit block)            
+                
 
-    def __repr__(self):
-        return  'Graph(%r)' % self.blocks
+        # create blocks according to leaders
+        block = Block()
+        block.append(ops[0])
+        self.blocks.append(block)
+        for op in ops[1:]:
+            if op in leaders:
+                block = Block()
+                self.blocks.append(block)
+            block.append(op)
+
+        # set edges for jumps between blocks and set edges
+        # between consecutive blocks
+        for block in self.blocks:
+            last_op = block.ops[-1]
+
+            next_op = nexts[last_op]
+            if next_op:
+                block.next = next_op.block
+            else:
+                block.next = self.exit_block
+
+            if last_op.type == 'control':
+                target_op = jumps[last_op]
+                if target_op:
+                    block.jump = target_op.block
+                else:
+                    block.jump = self.exit_block
+            else:
+                block.jump = None
+                    
+
+    def __str__(self):
+        return  'Graph(%s)' % ', '.join([str(b) for b in self.blocks])
 
 
 class Optimiser(object):
@@ -145,4 +213,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    #main()
+    import test_graph
+    test_graph.test()
+    
+    
