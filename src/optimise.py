@@ -63,7 +63,7 @@ class Block(object):
     block_id = -1
 
     def __init__(self, block_id=None, ops=None, out=None):
-        if not block_id:
+        if block_id == None:
             Block.block_id += 1
             self.block_id = Block.block_id
         elif block_id == 'entry':
@@ -149,7 +149,7 @@ class Graph(object):
                 
 
         # create blocks according to leaders
-        block = Block()
+        block = Block(0)
         block.append(ops[0])
         self.blocks.append(block)
         for op in ops[1:]:
@@ -164,14 +164,14 @@ class Graph(object):
             last_op = block.ops[-1]
 
             next_op = nexts[last_op]
-            if next_op:
+            if next_op != None:
                 block.next = next_op.block
             else:
                 block.next = self.exit_block
 
             if last_op.type == 'control':
                 target_op = jumps[last_op]
-                if target_op:
+                if target_op != None:
                     block.jump = target_op.block
                 else:
                     block.jump = self.exit_block
@@ -214,7 +214,9 @@ def main():
 
 if __name__ == '__main__':
     #main()
-    import test_graph
-    test_graph.test()
+    from unittest_graph import *
+    import unittest
+    unittest.main()
+    
     
     
