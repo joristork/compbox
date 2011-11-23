@@ -137,7 +137,7 @@ if __name__ == '__main__':
     else:
         while True:
            try:
-               s = raw_input('asm > ')
+               s = raw_input('asmyacc > ')
            except EOFError:
                break
            if not s: continue
