@@ -142,4 +142,4 @@ if __name__ == '__main__':
                break
            if not s: continue
            result = parser.parse(s)
-           print result
+           print repr(result)
