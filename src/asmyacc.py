@@ -8,7 +8,7 @@
 # ------------------------------------------------------------
 
 import yacc
-from objects import *
+from ir import *
 import sys
 
 # Get the token map from the lexer.  This is required.
