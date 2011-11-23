@@ -3,8 +3,8 @@
 #
 # assembly lexer
 #
-# Run this module with a filename as argument to tokenize the
-# contents.
+# Run this module without arguments to use the interative
+# lexer. Give a filename as argument to tokenise a file.
 # ------------------------------------------------------------
 
 import lex
@@ -78,5 +78,17 @@ if __name__ == '__main__':
             if not tok: break
             print tok
         print 'errors: %d\n' % error_count
-    else: print "expecting filename"
+    else:
+        while True:
+           try:
+               s = raw_input('asmlex > ')
+           except EOFError:
+               break
+           if not s: continue
+           lex.input(s)
+           while 1:
+               tok = lex.token()
+               if not tok: break
+               print tok
+           
 
