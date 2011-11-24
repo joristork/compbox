@@ -128,7 +128,7 @@ class Expr(object):
         return self.obtype
 
 class Instr(Expr):
-    obtype = 'expr'
+    obtype = 'instr'
     def __init__(self, instr, args):
         self.instr = instr
         self.args = args
