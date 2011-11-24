@@ -10,22 +10,30 @@ def optimize_jump(instruction_list):
                         Jump, NOT Label
                         label, label
     """
-    list_length = len(instruction_list)
+    for i,instruction in enumerate(instruction_list):        
+            jump_not_label(instruction, i, instruction_list)
     for i,instruction in enumerate(instruction_list):
-        if i < list_length - 1:
-            next_i = instruction_list[i + 1]
-            if (type(instruction) == Label and
-                type(next_i) == Instr and
-                next_i.instr == 'j'):
-                    replace_label(next_i.args[0], instruction.expr, instruction_list)
-                    instruction_list.remove(instruction)
-                    instruction_list.remove(next_i)
-            #if (type(instruction) == Instr and
-            #    instruction.instr == 'j' and
-            #    type(next_i) != Label):
-            #    while (type(rm_i) != Label):
-    return instruction_list       
-                
+            label_jump(instruction, i, instruction_list)
+            
+            
+    return instruction_list
+
+def label_jump(instruction, i, instruction_list):
+    if i < len(instruction_list) - 1:
+        next_i = instruction_list[i + 1]
+        if (type(instruction) == Label and
+            type(next_i) == Instr and
+            next_i.instr == 'j'):
+                replace_label(next_i.args[0], instruction.expr, instruction_list)
+                instruction_list.remove(instruction)
+                instruction_list.remove(next_i)    
+                    
+def jump_not_label(ins, i, il):
+    if (i < len(il) - 1 and
+        type(ins) == Instr and
+        ins.instr == 'j'):
+            while (type(il[i + 1]) != Label):
+                il.remove(il[i + 1])
 
 def replace_label(new_label, old_label, il):
     for instruction in il:
