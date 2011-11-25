@@ -8,9 +8,13 @@ from ir import *
 
 def optimize_jump(instruction_list):
     """
-        Situations:     Label, Jump
-                        Jump, NOT Label
-                        label, label
+    This function scans the instruction list to make improvements by adjusting
+    and removing jumps and labels.
+    Situations:     Label, Jump
+                    Jump, NOT Label
+                    label, label
+    First we need to scan the list for jump_not_label. After this has
+    been done, we can start on label_label and label_jump imporvements.
     """
     for i,instruction in enumerate(instruction_list):        
             jump_not_label(instruction, i, instruction_list)
@@ -27,23 +31,23 @@ def jump_not_label(ins, i, il):
     executed.
     """
     if (type(ins) == Instr and
-        ins.instr == 'j'):
+        ins.instr.lower() == 'j'):
             while (i < len(il) - 1 and
-                   type(il[i + 1]) != Label):
+                   type(il[i + 1]) != Label and type(il[i + 1]) != Raw):
                 del il[i + 1]
 
-def label_label(ins, i , il):
+def label_label(label, i , il):
     """
     This function searches for labels, and removes all labels that come
     directly after it. The instructions that point to one of the removed
     labels are adjusted so that they point to the first label, that isn't
     removed.
     """
-    if (type(ins) == Label):
+    if (type(label) == Label):
         while (i < len(il) - 1 and
                 type(il[i + 1]) == Label):
             
-            replace_label(ins, il[i + 1], il)
+            replace_label(label.expr, il[i + 1].expr, il)
             del il[i + 1]
 
 def label_jump(ins, i, il):
@@ -56,33 +60,30 @@ def label_jump(ins, i, il):
         next_i = il[i + 1]
         if (type(ins) == Label and
             type(il[i + 1]) == Instr and
-            il[i + 1].instr == 'j'):
+            il[i + 1].instr.lower() == 'j'):
                 replace_label(il[i + 1].args[0], ins.expr, il)
                 del il[i:i + 2]    
 
 def replace_label(new_label, old_label, il):
     """
-    This helper function
-    """
+    This helper function adjusts all instructions that point to the old_label
+    so that they point to the new label.
 
-    
+    IMPORTANT: Make sure new_label and old_label are strings. For instructions
+    the correct string is Instr.args[i] for some i and for Labels the correct
+    string is Label.expr .
+    """
     for ins in il:
         if (type(ins) == Instr):
-            while (str(old_label).strip() in str(ins.args).strip()):
-                ins.args[ins.args.index(str(old_label))] = str(new_label)
-
-
-
-
-
-
-
-
-
-
-
+            while (old_label in ins.args):
+                ins.args[ins.args.index(old_label)] = new_label
     
 def optimize_flat(instruction_list):
+    """
+    This functions calls a number of flat optimalization routines and
+    returns the improved list.
+    """
+    
     instruction_list = optimize_jump(instruction_list)
     return instruction_list
     
@@ -92,5 +93,11 @@ if __name__ == '__main__':
         instruction_list = []
         for line in open(sys.argv[1], 'r').readlines():
            if not line.strip(): continue
-           instruction_list.append(asmyacc.parser.parse(line))   
-        optimize_flat(instruction_list)
+           instruction_list.append(parser.parse(line))
+
+        instruction_list = optimize_flat(instruction_list)
+        for ins in instruction_list:
+            if type(ins) == Label:
+                print ins
+            elif type(ins) != Comment:
+                print "\t" + str(ins)
