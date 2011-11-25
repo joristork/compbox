@@ -137,10 +137,10 @@ class Instr(Expr):
         return '<Instr %r %r>' % (self.instr, self.args)
 
     def __str__(self):
-        return '%s ' % self.instr + ','.join((str(arg) for arg in self.args))
+        return '%s\t' % self.instr + ','.join((str(arg) for arg in self.args))
 
     def pattern(self):
-        return '%s ' % self.instr + ','.join((arg.pattern() for arg in self.args))
+        return '%s\t' % self.instr + ','.join((arg.pattern() for arg in self.args))
 
 class Register(Expr):
     obtype = 'reg'
