@@ -26,7 +26,8 @@ $kill[B4]= \{1,3\} $\\
 \subsection*{1c}
 \begin{tabular}{|c|c|c|c|c|c|c|}
 \hline 
-Block B   & \multicolumn{2}{|c|}{Initial}   & \multicolumn{2}{|c|}{Pass 1}     & \multicolumn{2}{|c|}{Pass 2}     \\  \cline{2-7}
+Block B   & \multicolumn{2}{|c|}{Initial}   & \multicolumn{2}{|c|}{Pass 1}     & \multicolumn{2}{|c|}{Pass 2}     \\  
+\cline{2-7}
           & $in[B]$        & $out[B]$       & $in[B]$        & $out[B]$        & $in[B]$        & $out[B]$        \\ 
 \hline                                                                                                      
 B1        & 0 0000 0000    & 0 1110 0000    & 0 0000 0111    &  0 1110 0010    & 0 1101 1111    &  0 1111 0010    \\ 
@@ -35,5 +36,19 @@ B3        & 0 0000 0000    & 0 0000 0100    & 0 1110 0000    &  0 1100 0100    &
 B4        & 0 0000 0000    & 0 0000 0011    & 0 0001 1000    &  0 0001 1011    & 0 1101 1011    &  0 1001 1011    \\ 
 \hline 
 \end{tabular} 
+\\
+\begin{tabular}{|c|c|}
+\hline 
+\multicolumn{2}{|c|}{Pass 3}     \\  
+\hline
+$in[B]$        & $out[B]$        \\ 
+\hline            
+0 1101 1111    &  0 1111 0010    \\ 
+0 1111 1011    &  0 1101 1011    \\ 
+0 1111 0010    &  0 1101 0110    \\ 
+0 1101 1011    &  0 1001 1011    \\ 
+\hline 
+\end{tabular} 
+
 
 \end{document}
