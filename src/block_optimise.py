@@ -11,7 +11,7 @@ class Peephole(object):
     def __init__(self, start, size):
         self.start_index = start_index
         self.size = size
-        self.instructions = self.block.get_instructions(start, size))
+        self.instructions = self.block[start:size]
         self.counter = 0
 
 
@@ -30,12 +30,14 @@ class Peephole(object):
 
     def __getitem__(self, index):
         """   """
-        return self.instructions[index]
+
+        return self.block[start + index]
 
 
     def __setitem__(self, index, value):
         """   """
-        self.block.set_intruction(self.start_index + index, value)
+
+        self.block[self.start_index + index] = value
 
 
 
@@ -54,35 +56,49 @@ class Peeper(object):
 
 
     def next(self):
-        if self.p_size + self.counter > self.block.length():
+        if self.p_size + self.counter > len(self.block):
             raise StopIteration
         else:
-            self.current_peephole = Peephole(self.counter, self.p_size)
+            self.peephole = Peephole(self.counter, self.p_size)
             self.counter += 1
-        return self.current_peephole
+        return self.peephole
         
 
 
 class BlockOptimiser(object):
     """ Parent class for the various block optimisations.  """
 
-    def __init__(self, block = None, peephole_size = 3):
+
+    def __init__(self, block = None, peephole_size = None):
+        """ By default the peephole size is that of the basic block """
+
         self.block = block
-        self.p_size = peephole_size
+        if not peephole_size:
+            self.p_size = block.length()
+        else:
+            self.p_size = peephole_size
 
 
     def set_block(self, block):
         """ Optimiser can be re-assigned to a new block  """
+
         self.block = block
 
 
     def set_peephole_size(self, size):
         """ Optimiser can be tweaked with a new peephole size. """
+
         self.p_size = size
+
+
+    def rename_temp_vars(self):
+        """ Renames temporary variables until bb is in normal form."""
+        pass
 
 
     def suboptimisation(self):
         """ Defined in subclass  """
+
         pass
 
 
@@ -94,7 +110,8 @@ class BlockOptimiser(object):
             return
         peeper = Peeper(self.block, self.p_size)
         for peephole in peeper:
-            while suboptimisation(peephole):
+            self.peephole = peephole
+            while suboptimisation():
                 pass
 
 
@@ -102,72 +119,107 @@ class BlockOptimiser(object):
 class CommonSubexpressions(BlockOptimiser):
     """ Block optimisation: duplicate subexpressions -> variables"""
 
-    def suboptimisation(self, peephole):
-        """   """
-        return False
+    def suboptimisation(self):
+        """ If duplicate subexpression found within peephole,  """
+
+        optimised = False
+
+        return optimised
 
 
 
 class ConstantFold(BlockOptimiser):
     """   """
 
-    def suboptimisation(self, peephole):
+    def suboptimisation(self):
         """   """
-        return False
+
+        optimised = False
+
+        return optimised
 
 
 
 class CopyPropagation(BlockOptimiser):
     """   """
 
-    def suboptimisation(self, peephole):
+    def suboptimisation(self):
         """   """
-        return False
+
+        optimised = False
+
+        return optimised
 
 
 
 class DeadCode(BlockOptimiser):
     """   """
 
-    def suboptimisation(self, peephole):
+    def suboptimisation(self):
         """   """
-        return False
+        
+        optimised = False
+
+        return optimised
 
 
 
 class TempVarRename(BlockOptimiser):
     """   """
 
-    def suboptimisation(self, peephole):
+    def suboptimisation(self):
         """   """
-        return False
+
+        optimised = False
+
+        return optimised
 
 
 
 class ExchangeIndependentStatements(BlockOptimiser):
     """   """
 
-    def suboptimisation(self, peephole):
+    def suboptimisation(self):
         """   """
-        return False
+
+        optimised = False
+
+        return optimised
 
 
 
 class AlgebraicTransformations(BlockOptimiser):
     """   """
 
-    def suboptimisation(self, peephole):
+    def suboptimisation(self):
         """   """
-        return False
+        
+        optimised = False
+        for ins, i in enumerate(self.peephole):
+            if ins.instr == 'mult':
+                n = math.log(ins.args[0], 2)
+                if n % 1 == 0:
+                    newins = Instr('sla',[ins.args[1], n])
+                    self.peephole[i] = newins
+                    optimised = True
+                n = math.log(ins.args[1], 2)
+                if n % 1 == 0:
+                    newins = Instr('sla',[ins.args[0], n])
+                    self.peephole[i] = newins
+                    optimised = True
+        return optimised
 
 
 
 class MachineDependentTransformations(BlockOptimiser):
     """   """
 
-    def suboptimisation(self, peephole):
+    def suboptimisation(self):
         """   """
-        return False
+
+        optimised = False
+
+        return optimised
 
 
 
