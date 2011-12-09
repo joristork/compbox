@@ -13,7 +13,6 @@ class BasicBlock(object):
         if not instr:
             self.instructions = []
         else:
-            print 'instructions:',instr
             self.instructions = instr
         self.next = []
 
@@ -51,24 +50,19 @@ class CFG(object):
 
         self.blocks.append(BasicBlock())
         for expr in flat_ir:
-            print expr
-            if type(expr) == Instr and expr.instr in control_instructions:
-                print 'found control'
+            if (type(expr) == Instr
+                and expr.instr in control_instructions
+                and not expr.instr in ['jal', 'jalr']):
                 self.blocks[-1].append(expr)
-                #return
-                
                 self.blocks.append(BasicBlock())
             elif type(expr) == Label:
-                print 'found label'
-                
-                #return
-                
                 self.blocks.append(BasicBlock([expr]))
             else:
                 self.blocks[-1].append(expr)
     
     def cfg_to_flat(self):
-        reduce( lambda x,y: x+y,  [list(block) for block in self.blocks], [])
+        #return reduce( lambda x,y: x+y,  [list(block) for block in self.blocks], [])
+        return sum((list(block) for block in self.blocks), [])
 
         
 
