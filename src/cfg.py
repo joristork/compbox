@@ -2,15 +2,19 @@
 # Control Flow Graph
 #
 
-from ir import *
+from ir import Instr, Label, control_instructions
 
 
 
 class BasicBlock(object):
     """   """
 
-    def __init__(self, instructions=[]):
-        self.instructions = instructions
+    def __init__(self, instr = None):
+        if not instr:
+            self.instructions = []
+        else:
+            print 'instructions:',instr
+            self.instructions = instr
         self.next = []
 
 
@@ -45,21 +49,23 @@ class CFG(object):
         
     def load_flat(self, flat_ir):
 
-        labels = {}
-        block = BasicBlock()
-        self.blocks.append(block)
+        self.blocks.append(BasicBlock())
         for expr in flat_ir:
+            print expr
             if type(expr) == Instr and expr.instr in control_instructions:
-                block.append(expr)
+                print 'found control'
+                self.blocks[-1].append(expr)
+                #return
                 
-                block = BasicBlock()
-                self.blocks.append(block)
+                self.blocks.append(BasicBlock())
             elif type(expr) == Label:
+                print 'found label'
                 
-                block = BasicBlock([expr])
-                self.blocks.append(block)
+                #return
+                
+                self.blocks.append(BasicBlock([expr]))
             else:
-                block.append(expr)
+                self.blocks[-1].append(expr)
     
     def cfg_to_flat(self):
         reduce( lambda x,y: x+y,  [list(block) for block in self.blocks], [])
@@ -68,4 +74,10 @@ class CFG(object):
 
 if __name__ == '__main__':
      from asmyacc import parser
-     c = CFG([parser.parse(line) for line in open('../benchmarks/pi.s', 'r').readlines()])
+
+     flat = []
+     for line in open('../benchmarks/pi.s', 'r').readlines():
+         if not line.strip(): continue
+         flat.append(parser.parse(line))
+         #print line, repr(flat[-1])
+     c = CFG(flat)
