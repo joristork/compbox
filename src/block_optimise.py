@@ -1,15 +1,18 @@
 #!/usr/bin/env python
 
 from asmyacc import parser
-import cfg
-
+from cfg import BasicBlock
+from ir import Instr
+import sys
+import math
 
 
 class Peephole(object):
     """ Contains an iterable list of instructions """
 
-    def __init__(self, start, size):
-        self.start_index = start_index
+    def __init__(self, block, start, size):
+        self.block = block
+        self.start_index = start
         self.size = size
         self.instructions = self.block[start:size]
         self.counter = 0
@@ -23,7 +26,7 @@ class Peephole(object):
         if self.counter >= self.size:
             raise StopIteration
         else:
-            self.current_instruction = self.instructions[counter]
+            self.current_instruction = self.instructions[self.counter]
             self.counter += 1
         return self.current_instruction
 
@@ -59,7 +62,7 @@ class Peeper(object):
         if self.p_size + self.counter > len(self.block):
             raise StopIteration
         else:
-            self.peephole = Peephole(self.counter, self.p_size)
+            self.peephole = Peephole(self.block, self.counter, self.p_size)
             self.counter += 1
         return self.peephole
         
@@ -74,7 +77,7 @@ class BlockOptimiser(object):
 
         self.block = block
         if not peephole_size:
-            self.p_size = block.length()
+            self.p_size = len(block)
         else:
             self.p_size = peephole_size
 
@@ -111,7 +114,7 @@ class BlockOptimiser(object):
         peeper = Peeper(self.block, self.p_size)
         for peephole in peeper:
             self.peephole = peephole
-            while suboptimisation():
+            while self.suboptimisation():
                 pass
 
 
@@ -191,20 +194,17 @@ class ExchangeIndependentStatements(BlockOptimiser):
 class AlgebraicTransformations(BlockOptimiser):
     """   """
 
+    def div_to_sra(self):
+
     def suboptimisation(self):
         """   """
         
         optimised = False
-        for ins, i in enumerate(self.peephole):
-            if ins.instr == 'mult':
-                n = math.log(ins.args[0], 2)
+        for i, ins in enumerate(self.peephole):
+            if ins.instr == 'div':
+                n = math.log(ins.args[2], 2)
                 if n % 1 == 0:
-                    newins = Instr('sla',[ins.args[1], n])
-                    self.peephole[i] = newins
-                    optimised = True
-                n = math.log(ins.args[1], 2)
-                if n % 1 == 0:
-                    newins = Instr('sla',[ins.args[0], n])
+                    newins = Instr('sra', [ins.args[0], ins.args[1], n])
                     self.peephole[i] = newins
                     optimised = True
         return optimised
@@ -222,8 +222,7 @@ class MachineDependentTransformations(BlockOptimiser):
         return optimised
 
 
-
-if __main__ == '__main__':
+def main():
     if len(sys.argv) > 1:
         raise_on_error = True
         instruction_list = []
@@ -232,3 +231,9 @@ if __main__ == '__main__':
            istruction_list.append(parser.parse(line))
         print 'errors: %d\n' % error_count    
         optimize_flat(instruction_list)
+    else:
+        pass
+
+
+if __name__ == '__main__':
+    main()

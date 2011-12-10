@@ -1,0 +1,12 @@
+block suboptimisations:
+    ...
+
+flat optimisations:
+
+liveness analysis
+
+IR_to_assembly
+
+flat_to_block
+
+
