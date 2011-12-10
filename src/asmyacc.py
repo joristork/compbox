@@ -3,7 +3,7 @@
 #
 # assembly parser
 #
-# Run this module without arguments to use the interative
+# Run this module without arguments to use the interactive
 # parser. Give a filename as argument to parse a file.
 # ------------------------------------------------------------
 
