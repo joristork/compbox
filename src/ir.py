@@ -14,7 +14,9 @@ control_instructions = [
     'bltz',  #- branch < 0 
     'bgez',  #- branch >= 0 
     'bct',   #- branch FCC TRUE 
-    'bcf'    #- branch FCC FALSE 
+    'bcf',    #- branch FCC FALSE
+    'bc1f',   #- Branch on floating point compare false.
+    'bc1t',   #- Branch on floating point compare true.
     ]
 
 loadstore_instructions = [
@@ -133,11 +135,17 @@ class Instr(Expr):
         self.instr = instr
         self.args = args
 
+    def jump_dest(self):
+        if self.instr in control_instructions:
+            return self.args[-1]
+        else:
+            raise Exception('this is not a jump/branch')
+
     def __repr__(self):
         return '<Instr %r %r>' % (self.instr, self.args)
 
     def __str__(self):
-        return '%s\t' % self.instr + ','.join((str(arg) for arg in self.args))
+        return '\t%s\t' % self.instr + ','.join((str(arg) for arg in self.args))
 
     def pattern(self):
         return '%s\t' % self.instr + ','.join((arg.pattern() for arg in self.args))
@@ -151,12 +159,17 @@ class Raw(Expr):
     obtype = 'raw'
     def __repr__(self):
         return '<Raw %r>' % self.expr
+    def __str__(self):
+        return '\t%s' % self.expr
 
         
 class Comment(Expr):
     obtype = 'comment'
     def __repr__(self):
         return '<Comment %r>' % self.expr
+    def __str__(self):
+        return '\t%s' % self.expr
+
 
 class Label(Expr):
     obtype = 'label'

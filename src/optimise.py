@@ -4,40 +4,119 @@
 # optimise.py
 #
 
-import sys
+from optparse import OptionParser
 
-# Option parsing module:
-# from optparse import OptionParser
+from asmyacc import parser
+from ir import Raw
+from cfg import CFG
 
-# Our own Optimiser modules:
-# import modules
+
+
+def split_frames(flat):
+    """
+    Split list of expression objects in 'frames'.
+    
+    """
+    
+    frames = [[]]
+    for expr in flat:
+        # A new frame starts with a .loc expression.
+        if type(expr) == Raw and expr.expr[:4] == '.loc':
+            frames.append([expr])
+        else:
+            frames[-1].append(expr)
+    return frames
+
 
 
 class Optimiser(object):
     """
     Main Optimiser.
 
-    Tasks
-     - convert source to IR;
-     - let Optimiser modules optimise the IR;
-     - convert IR back to source.
+    Tasks:
+     1. convert source to IR;
+     2. optimise IR;
+     3. convert IR back to source.
+     
     """
     
     def __init__(self, lines):
-        print 'Optimiser\nsource: %s' % lines
+        """
+        Convert expressions to IR.
+        """
+        
+        # Parse assembly and store in flat.
+        self.flat = []
+        for line in lines:
+            if not line.strip():
+                # We skip empty lines. We could also tell yacc to put them in a Raw.
+                continue
+            self.flat.append(parser.parse(line))
+
+
+    def optimise(self):
+        """
+        Optimise the IR.
+
+        Procedure:
+         1. split in frames
+         2. convert frames to graphs
+         3. optimise graphs
+         4. convert graphs to (flat) frames
+         5. concatenate frames to get optimised program.
+
+        Store result in flat.
+        
+        """
+
+        frames = split_frames(self.flat)
+        graphs = [CFG(frame) for frame in frames]
+
+        # optimise graphs
+
+        frames = [graph.cfg_to_flat() for graph in graphs]
+        self.flat = sum(frames, [])
+
+    
+    def result(self):
+        """
+        Return optimised assembly.
+        """
+        
+        return [str(expr)+'\n' for expr in self.flat]
 
 
 def main():
     """ Parse command line args, init. optimiser and run optimisations. """
 
-    # Use plain sys.argv[1] for now. optparse is for later.
-    if len(sys.argv) != 2:
-        print "argument expected"
-        return
-    sourcefile = open(sys.argv[1], 'r')
+    usage = "usage: %prog [options] file"
+    parser = OptionParser(usage)
+    parser.add_option("-d", "--dest", dest="filename",
+                      help="save result in FILENAME")
+    parser.add_option("-v", "--verbose",
+                      action="store_true", dest="verbose")
+    parser.add_option("-q", "--quiet",
+                      action="store_false", dest="verbose")
+
+    (options, args) = parser.parse_args()
+    if len(args) != 1:
+        parser.error("incorrect number of arguments")
+
+    
+    sourcefile = open(args[0], 'r')
     opt = Optimiser(sourcefile.readlines())
     sourcefile.close()
+    
+    opt.optimise()
 
+    if options.filename:
+        target_filename = options.filename
+    else:
+        target_filename = args[0] + '.opt'
+
+    targetfile = open(target_filename, 'w')
+    targetfile.writelines(opt.result())
+    targetfile.close()
 
 if __name__ == '__main__':
     main()
