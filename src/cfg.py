@@ -144,11 +144,16 @@ class CFG(object):
     def get_out_edges(self, block=None, name=None):
         """
         Returns all edges that come out of the given block.
+        You can pass the name of a block or the 
         """
         _out = []
-        for edge in self.edges:
-            if (block and edge[0] == block.name) or (name and edge[0] == name):
-                _out.append(edge)
+        if block and name and block.name != name:
+            raise Exception("You passed a name and a block, but the two don't correspond:\
+block.name != name")
+        else:
+            for edge in self.edges:
+                if (block and edge[0] == block.name) or (name and edge[0] == name):
+                    _out.append(edge)
         return _out
         
     def get_in_edges(self, block=None, name=None):
@@ -156,9 +161,13 @@ class CFG(object):
         Returns all edges that go into the given block.
         """
         _in = []
-        for edge in self.edges:
-            if (block and edge[1] == block.name) or (name and edge[1] == name):
-                _in.append(edge)
+        if block and name and block.name != name:
+            raise Exception("You passed a name and a block, but the two don't correspond:\
+block.name != name")
+        else:    
+            for edge in self.edges:
+                if (block and edge[1] == block.name) or (name and edge[1] == name):
+                    _in.append(edge)
         return _in
     
     def get_blockname(self, block):
@@ -193,4 +202,5 @@ def main():
     c = CFG(flat)
     return c
 if __name__ == '__main__':
-    main()
+    #main()
+    pass
