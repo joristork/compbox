@@ -64,6 +64,9 @@ class CFG(object):
         After the edges and blocks are found a png image is generated that
         displays the cfg.
         """
+        #The edges of the graph are tuples, where the first value is the
+        #name of the source node and the second value is the name of the
+        #destination node.
         self.edges = []
         self.blocks = []
         self.load_flat(flat_ir)
@@ -143,7 +146,7 @@ class CFG(object):
 
     def print_block(self, block=None, name=None):
         """
-        Prints the instructions of a given block.
+        Prints the instructions of a block.
         """
         if block and name and block.name != name:
             raise Exception("You passed a name and a block, but the two don't correspond:\
@@ -154,6 +157,9 @@ block.name != name")
             print self.get_block(name)
 
     def remove_block(self, name):
+        """
+        Removes the block corresponding to the name and all its edges
+        """
         removed = False
         for i,block in enumerate(self.blocks):
             if block.name == name:
@@ -167,7 +173,7 @@ block.name != name")
     
     def get_out_edges(self, block=None, name=None):
         """
-        Returns all edges that come out of the given block.
+        Returns all (a list) edges that come out of the given block.
         You can pass the name of a block or the 
         """
         _out = []
@@ -182,7 +188,7 @@ block.name != name")
         
     def get_in_edges(self, block=None, name=None):
         """
-        Returns all edges that go into the given block.
+        Returns all (a list) edges that go into the given block.
         """
         _in = []
         if block and name and block.name != name:
