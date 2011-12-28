@@ -3,7 +3,6 @@
 #
 # cfg.py
 #
-
 """
 
 Control Flow Graph and Basic Block
@@ -20,11 +19,15 @@ class BasicBlock(object):
 
     """
 
-    def __init__(self, instr = None):
+    def __init__(self, instr = None, name = None):
         if not instr:
             self.instructions = []
         else:
             self.instructions = instr
+        if name:
+            self.name = name
+        else:
+            self.name = "Nameless"
         self.next = []
 
 
@@ -52,37 +55,85 @@ class BasicBlock(object):
 class CFG(object):
     """
     Control Flow Graph
-    
     """
     
     def __init__(self, flat_ir):
+        self.edges = []
         self.blocks = []
         self.load_flat(flat_ir)
+        self.cfg_to_diagram()
 
         
     def load_flat(self, flat_ir):
         """
         Load list of expression objects in Control Flow Graph.
-
         """
-
         self.blocks.append(BasicBlock())
-        for expr in flat_ir:
+        j = 0
+        brenches = [
+            'beq',   #- branch == 0 
+            'bne',   #- branch != 0 
+            'blez',  #- branch <= 0 
+            'bgtz',  #- branch > 0 
+            'bltz',  #- branch < 0 
+            'bgez',  #- branch >= 0 
+            'bct',   #- branch FCC TRUE 
+            'bcf',    #- branch FCC FALSE
+            'bc1f',   #- Branch on floating point compare false.
+            'bc1t',   #- Branch on floating point compare true.
+        ]            
+        
+        for i,expr in enumerate(flat_ir):
             if (type(expr) == Instr
                 and expr.instr in control_instructions
                 and not expr.instr in ['jal', 'jalr']):
                 self.blocks[-1].append(expr)
-                self.blocks.append(BasicBlock())
+                
+                # Add edge from this block to the destination of the jump
+                try:
+                    self.edges.append((self.blocks[-1].name, expr.jump_dest()))
+                except exception:
+                    print "Adding edge failed because of jump"
+
+                # If previous instruction was a brench, add a edge from the
+                # previous block to the new block.
+                if (i > 0 and type(flat_ir[i-1]) == Instr
+                    and flat_ir[i-1].instr in brenches 
+                    and len(self.blocks) > 1):
+                    self.edges.append((self.blocks[-2].name, self.blocks[-1].name))
+                 
+                self.blocks.append(BasicBlock(name=str(j)))
+                j += 1
             elif type(expr) == Label:
-                self.blocks.append(BasicBlock([expr]))
+                # If previous instruction wasn't a jump, add an edge between
+                # the previous block and the new one.
+                if (i > 0 
+                    and flat_ir[i-1] not in ['j', 'jr'] 
+                    and len(self.blocks) > 1):
+                    self.edges.append((self.blocks[-1].name, expr.expr))
+                    
+                self.blocks.append(BasicBlock([expr], expr.expr))
             else:
+                # If previous instruction was a brench, add a edge from the
+                # previous block to the new block.                
+                if (i > 0 and type(flat_ir[i-1]) == Instr
+                    and flat_ir[i-1].instr in brenches 
+                    and len(self.blocks) > 1):
+                    self.edges.append((self.blocks[-2].name, self.blocks[-1].name))
+                    
                 self.blocks[-1].append(expr)
 
+    def cfg_to_diagram(self):
+        import pygraphviz as pgv
+        A = pgv.AGraph(directed=True)
+        for edge in self.edges: 
+            A.add_edge(edge[0], edge[1])
+        A.layout()
+        A.draw("CFG.png", prog="circo")
     
     def cfg_to_flat(self):
         """
         Convert Control Flow Graph to list of expression objects.
-        
         """
         
         return sum((list(block) for block in self.blocks), [])
