@@ -9,6 +9,8 @@ from optparse import OptionParser
 from asmyacc import parser
 from ir import Raw
 from cfg import CFG
+from block_optimise import AlgebraicTransformations as AT
+from block_optimise import ConstantFold as CF
 
 
 
@@ -72,7 +74,13 @@ class Optimiser(object):
         frames = split_frames(self.flat)
         graphs = [CFG(frame) for frame in frames]
 
-        # optimise graphs
+        # work in progress: optimise graphs (block level)
+        for graph in graphs:
+            for block in graph.blocks:
+                #optimiser = AT(block)
+                #optimiser.optimise()
+                optimiser = CF(block)
+                optimiser.optimise()
 
         frames = [graph.cfg_to_flat() for graph in graphs]
         self.flat = sum(frames, [])

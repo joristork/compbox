@@ -70,7 +70,7 @@ class CFG(object):
         """
         self.blocks.append(BasicBlock())
         j = 0
-        brenches = [
+        branches = [
             'beq',   #- branch == 0 
             'bne',   #- branch != 0 
             'blez',  #- branch <= 0 
@@ -98,7 +98,7 @@ class CFG(object):
                 # If previous instruction was a brench, add a edge from the
                 # previous block to the new block.
                 if (i > 0 and type(flat_ir[i-1]) == Instr
-                    and flat_ir[i-1].instr in brenches 
+                    and flat_ir[i-1].instr in branches 
                     and len(self.blocks) > 1):
                     self.edges.append((self.blocks[-2].name, self.blocks[-1].name))
                  
@@ -117,7 +117,7 @@ class CFG(object):
                 # If previous instruction was a brench, add a edge from the
                 # previous block to the new block.                
                 if (i > 0 and type(flat_ir[i-1]) == Instr
-                    and flat_ir[i-1].instr in brenches 
+                    and flat_ir[i-1].instr in branches 
                     and len(self.blocks) > 1):
                     self.edges.append((self.blocks[-2].name, self.blocks[-1].name))
                     

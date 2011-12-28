@@ -35,7 +35,10 @@ class Peephole(object):
     def __getitem__(self, index):
         """   """
 
-        return self.block[start + index]
+        try:
+            return self.block[self.start_index + index]
+        except TypeError:
+            return self.block[self.start_index + index.start:self.start_index + index.stop]
 
 
     def __setitem__(self, index, value):
@@ -101,6 +104,22 @@ class BlockOptimiser(object):
         pass
 
 
+    def find_constants(self, before = 0):
+        """ 
+        compiles a dict of (register,constant) pairs, with the constant
+        corresponding to the last value in the given register before the
+        ``before'' register 
+        
+        """
+        consts = {}
+        if self.verbosity == 1 : print 'self.peephole[0:before]: ',self.peephole[0:before]
+        for ins in self.peephole[0:before]:
+            if isinstance(ins,Instr):
+                if ins.instr == 'li':
+                    consts[ins.args[0]] = ins.args[1]
+        return consts
+
+
     def suboptimisation(self):
         """ Defined in subclass  """
 
@@ -136,15 +155,8 @@ class CommonSubexpressions(BlockOptimiser):
 class ConstantFold(BlockOptimiser):
     """ replaces arithmetic expression with only constants, with value """
 
-
-    def find_constants(self):
-        """ compiles a dict of (register,constant) pairs in the peephole """
-        consts = {}
-        for ins in self.peephole:
-            if ins.instr == 'li':
-                consts[ins.args[0]] = ins.args[1]
-        return consts
-
+    # need to look for last values of variables from point of view of operation
+    # in question
 
     def addu(self, i, ins, opt, consts):
         #NOTE: semantically inaccurate, but should be ok (explain in report)
@@ -154,13 +166,18 @@ class ConstantFold(BlockOptimiser):
         
         """    
         optimised = opt
+        if not isinstance(ins,Instr):
+            return optimised
         if ins.instr == 'addu':
+            if self.verbosity == 2 : print 'found an addu\n'
             if ins.args[1] in consts:
                 if ins.args[2] in consts:
                     newins = Instr('li',[ins.args[0],consts[ins.args[1]]+consts[ins.args[2]]])
+                    if self.verbosity == 1 : print 'about to replace: ', self.peephole[i]
                     self.peephole[i] = newins
                     consts[newins.args[0]] = newins.args[1]
                     if self.verbosity == 1 : print 'did a constant fold\n'
+                    if self.verbosity == 2 : print 'did a constant fold\n'
                     optimised = True
         return optimised
 
@@ -168,21 +185,28 @@ class ConstantFold(BlockOptimiser):
     def suboptimisation(self):
         """ if 2+ compile time constants, tries constant folding """
         optimised = False
-        consts = self.find_constants()
-        if len(consts) > 1:
-            for i, ins in enumerate(self.peephole.instructions):
+        for i, ins in enumerate(self.peephole):
+            if self.verbosity == 1 : print 'constantfold: ins under scrutiny: ',str(ins),'\n'
+            consts = self.find_constants(i)
+            if len(consts) > 1:
+                if self.verbosity == 1 : print 'constantfold: found more than one constant\n'
+                if self.verbosity == 1 : print 'constants: ',consts,'\n'
                 optimised = self.addu(i, ins, optimised, consts)
+        if self.verbosity == 1 : print 'constantfold suboptimisation done. block[8]: ', str(self.peephole[8])
         return optimised
 
 
 
 class AlgebraicTransformations(BlockOptimiser):
     """ contains various algebraic transformation optimisations  """
+    # Need to look for values of variables
 
-    def div_to_sra(self, i, ins, opt):
+    def divd_to_sra(self, i, ins, opt):
         """ shift-right arithmetic is faster than division...  """
         optimised = opt
-        if ins.instr == 'div':
+        if not isinstance(ins,Instr):
+            return optimised
+        if (ins.instr == 'div.d'):
             n = math.log(ins.args[2], 2)
             if n % 1 == 0:
                 newins = Instr('sra', [ins.args[0], ins.args[1], n])
@@ -206,7 +230,7 @@ class AlgebraicTransformations(BlockOptimiser):
         
         optimised = False
         for i, ins in enumerate(self.peephole):
-            optimised = self.div_to_sra(i, ins, optimised)
+            optimised = self.divd_to_sra(i, ins, optimised)
             #TODO: any other algebraic opts? (sla not available)
         return optimised
 
