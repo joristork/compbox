@@ -4,7 +4,7 @@ from asmyacc import parser
 import sys
 from ir import *
 
-#test with: optimize([Instr("BEQ", ["2"]), Label("1"),Label("2"),Instr("j",["3"]),Instr("BEQ", ["2"]),Instr("BEQ", ["2"]),Instr("BEQ", ["2"]),Instr("BEQ", ["2"]),Instr("BEQ", ["2"]),Label("3")])
+#test with: optimize([Instr("beq", ["2"]), Label("1"),Label("2"),Instr("j",["3"]),Instr("beq", ["2"]),Instr("beq", ["2"]),Instr("beq", ["2"]),Instr("beq", ["2"]),Instr("beq", ["2"]),Label("3")])
 
     
 def optimize_jump(instruction_list):
@@ -35,9 +35,9 @@ def optimize_jump(instruction_list):
             clean = label_jump(instruction, i, instruction_list)
             if not clean:
                 break
-
+            
+    
     return instruction_list
-
 
 def remove_comments(il):
     new = []
@@ -71,8 +71,10 @@ def label_label(label, i , il):
     """
     clean = True
     if (type(label) == Label):
-        while (i < len(il) - 1 and
-                type(il[i + 1]) == Label):
+        if(i < len(il) - 1 and
+                type(il[i + 1]) == Label) and not\
+                (len(il[i + 1].expr) > 2 and 
+                il[i + 1].expr[0:2]=="__"):
             replace_label(label.expr, il[i + 1].expr, il)
             del il[i + 1]
             clean = False
@@ -89,7 +91,7 @@ def label_jump(ins, i, il):
         next_i = il[i + 1]
         if (type(ins) == Label and
             type(il[i + 1]) == Instr and
-            il[i + 1].instr.lower() == 'j'):
+            il[i + 1].instr == 'j'):
                 replace_label(il[i + 1].args[0], ins.expr, il)
                 del il[i:i + 2]
                 clean = False
@@ -126,7 +128,7 @@ def useless_brench(il):
         for i,ins in enumerate(il):
             if type(ins) == Instr and i < len(il) - 1 and \
                type(il[i + 1]) == Label and \
-               ins.instr.lower() in control_instructions:
+               ins.instr in control_instructions:
                 if ins.jump_dest() == il[i + 1].expr:
                     del il[i]
                     clean = False
@@ -148,7 +150,7 @@ def brench_jump(il):
     while(not clean):
         clean = True  
         for i,ins in enumerate(il):
-            if type(ins) == Instr and ins.instr.lower() in negation \
+            if type(ins) == Instr and ins.instr in negation \
                and i + 2 < len(il) - 1 and type(il[i+1]) == Instr \
                and type(il[i+2]) == Label and \
                ins.jump_dest() == il[i+2].expr:
@@ -167,9 +169,13 @@ def optimize(instruction_list):
     This functions calls a number of flat optimalization routines and
     returns the improved list.
     """
-    
-    instruction_list = optimize_jump(instruction_list)
-    instruction_list = optimize_brench(instruction_list)
+    old_len = 1
+    new_len = 0
+    while old_len != new_len:
+        old_len = len(instruction_list)
+        instruction_list = optimize_jump(instruction_list)
+        instruction_list = optimize_brench(instruction_list)
+        new_len = len(instruction_list)
     return instruction_list
     
 if __name__ == '__main__':
