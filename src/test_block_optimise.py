@@ -18,7 +18,7 @@ class TestBlockOptimisers(unittest.TestCase):
 
 
     def test_algebra(self):
-        i0 = ir.Instr('div', ['dest',1634563464,64])
+        i0 = ir.Instr('div.d', ['dest',1634563464,64])
         block = cfg.BasicBlock([i0])
         bop = block_optimise.AlgebraicTransformations(block = block)
         bop.optimise()
@@ -44,6 +44,7 @@ class TestBlockOptimisers(unittest.TestCase):
         bop.optimise()
         expected = str(ir.Instr('li', ['adest2', 0x6]))
         result = str(block[8])
+        #print 'result[8]: ',result
         self.assertTrue(result == expected)
 
 
