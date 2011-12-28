@@ -125,7 +125,7 @@ class CFG(object):
 
     def cfg_to_diagram(self):
         import pygraphviz as pgv
-        A = pgv.AGraph()
+        A = pgv.AGraph(directed=True)
         for edge in self.edges: 
             A.add_edge(edge[0], edge[1])
         A.layout()
