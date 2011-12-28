@@ -129,7 +129,7 @@ class CFG(object):
         for edge in self.edges: 
             A.add_edge(edge[0], edge[1])
         A.layout()
-        A.draw("CFG.png")
+        A.draw("CFG.png", prog="circo")
     
     def cfg_to_flat(self):
         """
