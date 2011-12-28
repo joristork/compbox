@@ -76,7 +76,7 @@ class BlockOptimiser(object):
     def __init__(self, block = None, peephole_size = None):
         """ By default the peephole size is that of the basic block """
 
-        self.verbosity = 0
+        self.verbosity = 1
         self.block = block
         if not peephole_size:
             self.p_size = len(block)
