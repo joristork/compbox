@@ -132,7 +132,7 @@ class CFG(object):
     def cfg_to_diagram(self):
         """
         Generates a diagram using the edges that were found when load_flat
-        was executed.
+        was executed. The result is saved in a png image file.
         """
         import pygraphviz as pgv
         A = pgv.AGraph(directed=True)
@@ -141,23 +141,23 @@ class CFG(object):
         A.layout()
         A.draw("CFG.png")
     
-    def get_out_edges(self, block):
+    def get_out_edges(self, block=None, name=None):
         """
         Returns all edges that come out of the given block.
         """
         _out = []
         for edge in self.edges:
-            if edge[0] == block.name:
+            if (block and edge[0] == block.name) or (name and edge[0] == name):
                 _out.append(edge)
         return _out
         
-    def get_in_edges(self, block):
+    def get_in_edges(self, block=None, name=None):
         """
         Returns all edges that go into the given block.
         """
         _in = []
         for edge in self.edges:
-            if edge[1] == block.name:
+            if (block and edge[1] == block.name) or (name and edge[1] == name):
                 _in.append(edge)
         return _in
     
@@ -182,14 +182,15 @@ class CFG(object):
         
         return sum((list(block) for block in self.blocks), [])
 
-        
-
-if __name__ == '__main__':
+def main():
     # test code
     from asmyacc import parser
 
     flat = []
-    for line in open('../benchmarks/pi.s', 'r').readlines():
+    for line in open('../benchmarks/slalom.s', 'r').readlines():
         if not line.strip(): continue
         flat.append(parser.parse(line))
     c = CFG(flat)
+    return c
+if __name__ == '__main__':
+    main()
