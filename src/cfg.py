@@ -58,6 +58,12 @@ class CFG(object):
     """
     
     def __init__(self, flat_ir):
+        """
+        Sets the blocks and edges, by executing the load_flat function. The
+        load_flat function gets of (flat) list of instructions.
+        After the edges and blocks are found a png image is generated that
+        displays the cfg.
+        """
         self.edges = []
         self.blocks = []
         self.load_flat(flat_ir)
@@ -124,12 +130,50 @@ class CFG(object):
                 self.blocks[-1].append(expr)
 
     def cfg_to_diagram(self):
+        """
+        Generates a diagram using the edges that were found when load_flat
+        was executed.
+        """
         import pygraphviz as pgv
         A = pgv.AGraph(directed=True)
         for edge in self.edges: 
             A.add_edge(edge[0], edge[1])
         A.layout()
         A.draw("CFG.png")
+    
+    def get_out_edges(self, block):
+        """
+        Returns all edges that come out of the given block.
+        """
+        _out = []
+        for edge in self.edges:
+            if edge[0] == block.name:
+                _out.append(edge)
+        return _out
+        
+    def get_in_edges(self, block):
+        """
+        Returns all edges that go into the given block.
+        """
+        _in = []
+        for edge in self.edges:
+            if edge[1] == block.name:
+                _in.append(edge)
+        return _in
+    
+    def get_blockname(self, block):
+        """
+        Returns the name of a given block
+        """
+        return block.name
+        
+    def get_block(self, name):
+        """
+        Given a name, the corresponding block object is returned.
+        """
+        for block in self.blocks:
+            if block.name == name:
+                return block
     
     def cfg_to_flat(self):
         """
