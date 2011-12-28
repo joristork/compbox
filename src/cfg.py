@@ -61,7 +61,7 @@ class CFG(object):
         self.edges = []
         self.blocks = []
         self.load_flat(flat_ir)
-        #self.cfg_to_diagram()
+        self.cfg_to_diagram()
 
         
     def load_flat(self, flat_ir):
@@ -129,7 +129,7 @@ class CFG(object):
         for edge in self.edges: 
             A.add_edge(edge[0], edge[1])
         A.layout()
-        A.draw("CFG.png", prog="circo")
+        A.draw("CFG.png")
     
     def cfg_to_flat(self):
         """
