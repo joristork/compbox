@@ -58,10 +58,19 @@ class CFG(object):
     """
     
     def __init__(self, flat_ir):
+        """
+        Sets the blocks and edges, by executing the load_flat function. The
+        load_flat function gets of (flat) list of instructions.
+        After the edges and blocks are found a png image is generated that
+        displays the cfg.
+        """
+        #The edges of the graph are tuples, where the first value is the
+        #name of the source node and the second value is the name of the
+        #destination node.
         self.edges = []
         self.blocks = []
         self.load_flat(flat_ir)
-        #self.cfg_to_diagram()
+        self.cfg_to_diagram()
 
         
     def load_flat(self, flat_ir):
@@ -124,12 +133,86 @@ class CFG(object):
                 self.blocks[-1].append(expr)
 
     def cfg_to_diagram(self):
+        """
+        Generates a diagram using the edges that were found when load_flat
+        was executed. The result is saved in a png image file.
+        """
         import pygraphviz as pgv
         A = pgv.AGraph(directed=True)
         for edge in self.edges: 
             A.add_edge(edge[0], edge[1])
         A.layout()
-        A.draw("CFG.png", prog="circo")
+        A.draw("CFG.png")
+
+    def print_block(self, block=None, name=None):
+        """
+        Prints the instructions of a block.
+        """
+        if block and name and block.name != name:
+            raise Exception("You passed a name and a block, but the two don't correspond:\
+block.name != name")
+        if block and not name:
+            print block
+        elif name:
+            print self.get_block(name)
+
+    def remove_block(self, name):
+        """
+        Removes the block corresponding to the name and all its edges
+        """
+        removed = False
+        for i,block in enumerate(self.blocks):
+            if block.name == name:
+                del self.blocks[i]
+                removed = True
+                break
+        for i,edge in enumerate(self.edges):
+            if name in edge:
+                self.edges.remove(edge)
+        return removed
+    
+    def get_out_edges(self, block=None, name=None):
+        """
+        Returns all (a list) edges that come out of the given block.
+        You can pass the name of a block or the 
+        """
+        _out = []
+        if block and name and block.name != name:
+            raise Exception("You passed a name and a block, but the two don't correspond:\
+block.name != name")
+        else:
+            for edge in self.edges:
+                if (block and edge[0] == block.name) or (name and edge[0] == name):
+                    _out.append(edge)
+        return _out
+        
+    def get_in_edges(self, block=None, name=None):
+        """
+        Returns all (a list) edges that go into the given block.
+        """
+        _in = []
+        if block and name and block.name != name:
+            raise Exception("You passed a name and a block, but the two don't correspond:\
+block.name != name")
+        else:    
+            for edge in self.edges:
+                if (block and edge[1] == block.name) or (name and edge[1] == name):
+                    _in.append(edge)
+        return _in
+    
+    def get_blockname(self, block):
+        """
+        Returns the name of a given block
+        """
+        return block.name
+        
+    def get_block(self, name):
+        """
+        Given a name, the corresponding block object is returned.
+        """
+        for block in self.blocks:
+            if block.name == name:
+                return block
     
     def cfg_to_flat(self):
         """
@@ -138,14 +221,16 @@ class CFG(object):
         
         return sum((list(block) for block in self.blocks), [])
 
-        
-
-if __name__ == '__main__':
+def main():
     # test code
     from asmyacc import parser
 
     flat = []
-    for line in open('../benchmarks/pi.s', 'r').readlines():
+    for line in open('opt.txt', 'r').readlines():
         if not line.strip(): continue
         flat.append(parser.parse(line))
     c = CFG(flat)
+    return c
+if __name__ == '__main__':
+    #main()
+    pass
