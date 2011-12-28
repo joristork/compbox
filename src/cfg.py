@@ -140,6 +140,30 @@ class CFG(object):
             A.add_edge(edge[0], edge[1])
         A.layout()
         A.draw("CFG.png")
+
+    def print_block(self, block=None, name=None):
+        """
+        Prints the instructions of a given block.
+        """
+        if block and name and block.name != name:
+            raise Exception("You passed a name and a block, but the two don't correspond:\
+block.name != name")
+        if block and not name:
+            print block
+        elif name:
+            print self.get_block(name)
+
+    def remove_block(self, name):
+        removed = False
+        for i,block in enumerate(self.blocks):
+            if block.name == name:
+                del self.blocks[i]
+                removed = True
+                break
+        for i,edge in enumerate(self.edges):
+            if name in edge:
+                self.edges.remove(edge)
+        return removed
     
     def get_out_edges(self, block=None, name=None):
         """
@@ -196,7 +220,7 @@ def main():
     from asmyacc import parser
 
     flat = []
-    for line in open('../benchmarks/slalom.s', 'r').readlines():
+    for line in open('opt.txt', 'r').readlines():
         if not line.strip(): continue
         flat.append(parser.parse(line))
     c = CFG(flat)
