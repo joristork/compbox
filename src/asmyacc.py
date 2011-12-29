@@ -87,14 +87,13 @@ def p_arg_brackets(p):
     p[0] = '%s(%s)' %(p[1], p[3].expr)
 
 
+def p_int_minus(p):
+    '''int : '-' INT'''
+    p[0] = -1*p[2]
+
 def p_int(p):
     'int : INT'
     p[0] = p[1]
-
-
-def p_int_minus(p):
-    '''int : '-' INT'''
-    p[0] = -1*p[1]
 
 
 def p_hex(p):
