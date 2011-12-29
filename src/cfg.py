@@ -226,11 +226,11 @@ def main():
     from asmyacc import parser
 
     flat = []
-    for line in open('opt.txt', 'r').readlines():
+    for line in open('../benchmarks/pi.s', 'r').readlines():
         if not line.strip(): continue
         flat.append(parser.parse(line))
     c = CFG(flat)
     return c
 if __name__ == '__main__':
-    #main()
+    main()
     pass
