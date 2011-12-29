@@ -1,94 +1,127 @@
 #
 # IR objects
 #
-
+# Reg $31 is a return register
 control_instructions = [
-    'j',     #- jump 
-    'jal',   #- jump and link 
-    'jr',    #- jump register 
-    'jalr',  #- jump and link register 
-    'beq',   #- branch == 0 
-    'bne',   #- branch != 0 
-    'blez',  #- branch <= 0 
-    'bgtz',  #- branch > 0 
-    'bltz',  #- branch < 0 
-    'bgez',  #- branch >= 0 
-    'bct',   #- branch FCC TRUE 
-    'bcf',    #- branch FCC FALSE
-    'bc1f',   #- Branch on floating point compare false.
-    'bc1t',   #- Branch on floating point compare true.
+    'j',     #- jump.                                                           Used: j {label}. Needs: [], Gen: [] 
+    'jal',   #- jump and link.                                                  Used: jal {function}. Needs: [$31], Gen: [$31] 
+    'jr',    #- jump register.                                                  Used: jr $x. Needs: [$x], Gen: [] 
+    'jalr',  #- jump and link register.                                         Not used
+    'beq',   #- branch == 0.                                                    Used: beq $a $b {label}. Needs: [$a,$b], Gen: [] 
+    'bne',   #- branch != 0.                                                    Used: bne $a $b {label}. Needs: [$a,$b], Gen: []
+    'blez',  #- branch <= 0.                                                    Used: blez $a {label}. Needs: [$a], Gen: []
+    'bgtz',  #- branch > 0.                                                     Used: bgtz $a {label}. Needs: [$a], Gen: []
+    'bltz',  #- branch < 0.                                                     Used: bltz $a {label}. Needs: [$a], Gen: []
+    'bgez',  #- branch >= 0.                                                    Used: bgez $a {label}. Needs: [$a], Gen: [] 
+    'bct',   #- branch FCC TRUE.                                                Used: bct {label}. Needs: [$fcc], Gen: [] 
+    'bcf',   #- branch FCC FALSE.                                               Used: bcf {label}. Needs: [$fcc], Gen: [] 
+    'bc1f',  #- Branch on floating point compare false.                         Used: bc1t {label}. Needs: [$fcc], Gen: [] 
+    'bc1t'   #- Branch on floating point compare true.                          Used: bc1t {label}. Needs: [$fcc], Gen: [] 
     ]
 
 loadstore_instructions = [
-    'lb',   #- load byte 
-    'lbu',  #- load byte unsigned 
-    'lh',   #- load half (short) 
-    'lhu',  #- load half (short) unsigned 
-    'lw',   #- load word 
-    'dlw',  #- load double word 
-    'l.s',  #- load single-precision FP 
-    'l.d',  #- load double-precision FP 
-    'sb',   #- store byte 
-    'sbu',  #- store byte unsigned 
-    'sh',   #- store half (short) 
-    'shu',  #- store half (short) unsigned 
-    'sw',   #- store word 
-    'dsw',  #- store double word 
-    's.s',  #- store single-precision FP 
-    's.d',  #- store double-precision FP
-    'move', # extra
-    'li'
+    'lb',   #- load byte.                                                       Used: lb $a C($b). Needs: [$b], Gen: [$a] 
+    'lbu',  #- load byte unsigned.                                              Used: lbu $a C($b). Needs: [$b], Gen: [$a] 
+    'lh',   #- load half (short).                                               Used: lh $a C($b). Needs: [$b], Gen: [$a] 
+    'lhu',  #- load half (short) unsigned.                                      Used: lhu $a C($b). Needs: [$b], Gen: [$a] 
+    'lw',   #- load word.                                                       Used: lw $a C($b). Needs: [$b], Gen: [$a] 
+    'dlw',  #- load double word .                                               Used: dlw $a C($b). Needs: [$b], Gen: [$a] 
+    'dmfc1',#- Doubleword move from floating point.                             Used: dmfc1 $a $b. Needs: [$b], Gen: [$a]
+    'l.s',  #- load single-precision FP.                                        Used: l.s $a C($b). Needs: [$b], Gen: [$a] 
+    'l.d',  #- load double-precision FP.                                        Used: l.d $a C($b). Needs: [$b], Gen: [$a]  
+    'sb',   #- store byte.                                                      Used: sb $a C($b). Needs: [$a,$b], Gen: [] 
+    'sbu',  #- store byte unsigned.                                             Used: Used: sbu $a C($b). Needs: [$a,$b], Gen: [] 
+    'sh',   #- store half (short).                                              Used: sh $a C($b). Needs: [$a,$b], Gen: [] 
+    'shu',  #- store half (short) unsigned.                                     Used: shu $a C($b). Needs: [$a,$b], Gen: [] 
+    'sw',   #- store word.                                                      Used: sw $a C($b). Needs: [$a,$b], Gen: [] 
+    'dsw',  #- store double word.                                               Used: dzw $a C($b). Needs: [$b,$a], Gen: [] 
+    'dsz',  #- Double store zero.                                               Used: dsz C($a). C = constant offset. Needs: [$a], Gen: [] 
+    's.s',  #- store single-precision FP.                                       Used: s.s $a C($b). Needs: [$a,$b], Gen: [] 
+    's.d',  #- store double-precision FP.                                       Used: s.d $a C($b). Needs: [$a,$b], Gen: [] 
+    'move', #- Move register value.                                             Used: move $a $b. Used: move $a $b. Needs: [$b], Gen: [$a]
+    'mov.d',#- Move floating point value. mov.d $a $b.                          Used: mov.d $a $b. Needs: [$b], Gen: [$a]
+    'mov.s',#- Move floating point value. mov.s $a $b.                          Used: mov.s $a $b. Needs: [$b], Gen: [$a]    
+    'li'    #- Load immidiate.                                                  Used: li $a {val}. Needs: [], Gen: [$a] 
     ]
 
 intarithm_instructions = [
-    'add',  #- integer add 
-    'addu', #- integer add unsigned 
-    'sub',  #- subtract 
-    'subu', #- integer subtract unsigned 
-    'mult', #- integer multiply 
-    'multu',#- integer multiply unsigned 
-    'div',  #- integer divide 
-    'divu', #- integer divide unsigned 
-    'and',  #- logical AND 
-    'or',   #- logical OR 
-    'xor',  #- logical XOR 
-    'nor',  #- logical NOR 
-    'sll',  #- shift left logical 
-    'srl',  #- shift right logical 
-    'sra',  #- shift right arithmetic 
-    'slt',  #- set less than 
-    'sltu', #- set less than unsigned 
+    'add',  #- integer add.                                                     Used: add $a $b $c or add $a $b val. Needs: [$b(,$c)], Gen: [$a] 
+    'addi', #- integer add.                                                     Used: addi $a $b val. Needs: [$b], Gen: [$a] 
+    'addu', #- integer add unsigned.                                            Used: addu $a $b $c or addu $a $b val. Needs: [$b(,$c)], Gen: [$a] 
+    'addiu',#- integer add.                                                     Used: addiu $a $b val. Needs: [$b], Gen: [$a] 
+    'sub',  #- subtract.                                                        Used: sub $a $b $c or sub $a $b val. Needs: [$b(,$c)], Gen: [$a] 
+    'subu', #- integer subtract unsigned.                                       Used: subu $a $b $c or subu $a $b val. Needs: [$b(,$c)], Gen: [$a] 
+    'mult', #- integer multiply.                                                Used: mult $a $b . Needs: [$a,$b], Gen: [$hi,$lo] 
+    'multu',#- integer multiply unsigned.                                       Used: mult $a $b . Needs: [$a,$b], Gen: [$hi,$lo] 
+    'div',  #- integer divide.                                                  Used: div $a $b . Needs: [$a,$b], Gen: [$hi,$lo] 
+    'divu', #- integer divide unsigned.                                         Used: div $a $b . Needs: [$a,$b], Gen: [$hi,$lo] 
+    'and',  #- logical AND.                                                     Used: and $a $b $c or and $a $b val. Needs: [$b(,$c)], Gen: [$a] 
+    'andi', #- logical AND.                                                     Used: andi $a $b val. Needs: [$b], Gen: [$a] 
+    'or',   #- logical OR.                                                      Used: or $a $b $c or or $a $b val. Needs: [$b(,$c)], Gen: [$a] 
+    'ori',  #- logical OR.                                                      Used: ori $a $b val. Needs: [$b], Gen: [$a]
+    'xor',  #- logical XOR.                                                     Used: xor $a $b $c or xor $a $b val. Needs: [$b(,$c)], Gen: [$a] 
+    'xori', #- logical XOR.                                                     Used: xori $a $b val. Needs: [$b], Gen: [$a]
+    'nor',  #- logical NOR.                                                     Used: nor $a $b $c. Needs: [$b,$c], Gen: [$a] 
+    'sll',  #- shift left logical.                                              Used: sll $a $b {val}. Needs: [$b], Gen: [$a] 
+    'sllv', #- Not used, but in user guide.                                     Used: sllv $a $b {val}. Needs: [$b], Gen: [$a] 
+    'srl',  #- shift right logical.                                             Used: srl $a $b {val}. Needs: [$b], Gen: [$a] 
+    'srlv', #- Not used, but in user guide.                                     Used: srlv $a $b {val}. Needs: [$b], Gen: [$a] 
+    'sra',  #- shift right arithmetic.                                          Used: sra $a $b {val}. Needs: [$b], Gen: [$a] 
+    'srav', #- Not used, but in user guide.                                     Used: srav $a $b {val}. Needs: [$b], Gen: [$a] 
+    'slt',  #- set less than.                                                   Used: slt $a $b $c or slt $a $b val. Needs: [$b(,$c)], Gen: [$a] 
+    'slti', #- set less than.                                                   Used: slti $a $b val. Needs: [$b], Gen: [$a]
+    'sltu', #- set less than unsigned.                                          Used: sltu $a $b $c or sltu $a $b val. Needs: [$b(,$c)], Gen: [$a] 
+    'sltiu' #- set less than unsigned.                                          Used: sltiu $a $b val. Needs: [$b], Gen: [$a]
     ]
 
 floatarithm_instructions = [
-    'add.s',    #- single-precision (SP) add
-    'add.d',    #- double-precision (DP) add
-    'sub.s',    #- SP subtract
-    'sub.d',    #- DP subtract
-    'mult.s',   #- SP multiply
-    'mult.d',   #- DP multiply
-    'div.s',    #- SP divide
-    'div.d',    #- DP divide
-    'abs.s',    #- SP absolute value
-    'abs.d',    #- DP absolute value
-    'neg.s',    #- SP negation
-    'neg.d',    #- DP negation
-    'sqrt.s',   #- SP square root
-    'sqrt.d',   #- DP square root
-    'cvt',       #- int., single, double conversion
-    'c.s',      #- SP compare
-    'c.d',      #- DP compare
+    'add.s',    #- single-precision (SP) add.                                   Used: add.s $a $b $c. Needs: [$b,$c], Gen: [$a] 
+    'add.d',    #- double-precision (DP) add.                                   Used: add.d $a $b $c. Needs: [$b,$c], Gen: [$a] 
+    'sub.s',    #- SP subtract.                                                 Used: sub.s $a $b $c. Needs: [$b,$c], Gen: [$a] 
+    'sub.d',    #- DP subtract.                                                 Used: sub.d $a $b $c. Needs: [$b,$c], Gen: [$a] 
+    'mul.s',    #- SP multiply.                                                 Used: mul.s $a $b $c. Needs: [$b,$c], Gen: [$a] 
+    'mul.d',    #- DP multiply.                                                 Used: mul.d $a $b $c. Needs: [$b,$c], Gen: [$a] 
+    'div.s',    #- SP divide.                                                   Used: div.s $a $b $c. Needs: [$b,$c], Gen: [$a] 
+    'div.d',    #- DP divide.                                                   Used: div.d $a $b $c. Needs: [$b,$c], Gen: [$a] 
+    'abs.s',    #- SP absolute value.                                           Used: abs.s $a $b. Needs: [$b], Gen: [$a]
+    'abs.d',    #- DP absolute value.                                           Used: abs.d $a $b. Needs: [$b], Gen: [$a]
+    'neg.s',    #- SP negation.                                                 Used: neg.s $a $b. Needs: [$b], Gen: [$a]
+    'neg.d',    #- DP negation.                                                 Used: neg.d $a $b. Needs: [$b], Gen: [$a]
+    'sqrt.s',   #- SP square root.                                              Used: sqrt.s $a $b. Needs: [$b], Gen: [$a]
+    'sqrt.d',   #- DP square root.                                              Used: sqrt.d $a $b. Needs: [$b], Gen: [$a]
+    'cvt',      #- int., single, double conversion.                             Used: cvt $a $b. Needs: [$b], Gen: [$a]
+    'cvt.d.w',  #- Integer to float.                                            Used: cvt.d.w $a $b. Needs: [$b], Gen: [$a]
+    'cvt.s.d',  #- Float: double to single precision.                           Used: cvt.s.d $a $b. Needs: [$b], Gen: [$a]
+    'cvt.d.s',  #- Float: single to double precision.                           Used: cvt.d.s $a $b. Needs: [$b], Gen: [$a]        
+    'cvt.s.w',  #- Float: single precision to integer.                          Used: cvt.s.w $a $b. Needs: [$b], Gen: [$a]    
+    'cvt.w.s',  #- Float: integer to single precision.                          Used: cvt.w.s $a $b. Needs: [$b], Gen: [$a]
+    'cvt.w.d',  #- Float: integer to double precision.                          Used: cvt.w.d $a $b. Needs: [$b], Gen: [$a]        
+    'c.eq.s',   #- SP compare.                                                  Used: c.eq.s $a $b. Needs: [$a,$b], Gen: [$fcc]
+    'c.eq.d',   #- DP compare.                                                  Used: c.eq.d $a $b. Needs: [$a,$b], Gen: [$fcc]
+    'c.lt.s',   #- SP compare.                                                  Used: c.lt.s $a $b. Needs: [$a,$b], Gen: [$fcc]
+    'c.lt.d',   #- DP compare.                                                  Used: c.lt.d $a $b. Needs: [$a,$b], Gen: [$fcc]
+    'c.le.s',   #- SP compare.                                                  Used: c.le.s $a $b. Needs: [$a,$b], Gen: [$fcc]
+    'c.le.d',   #- DP compare.                                                  Used: c.le.d $a $b. Needs: [$a,$b], Gen: [$fcc]  
+    'trunc.l.d',#- Convert FP.                                                  Used: trunc.l.d $a $b $c. Needs: [$b,$c], Gen: [$a]       
+    'trunc.l.s',#- Convert FP.                                                  Used: trunc.w.d $a $b $c. Needs: [$b,$c], Gen: [$a] 
+    'trunc.w.d',#- Convert FP.                                                  Used: trunc.w.d $a $b $c. Needs: [$b,$c], Gen: [$a] 
+    'trunc.w.s' #- Convert FP.                                                  Used: trunc.w.d $a $b $c. Needs: [$b,$c], Gen: [$a]              
 ]
 
 misc_instructions = [
-    'nop',      #- no operation
-    'syscall',  #- system call
-    'break',    #- declare program error
+    'nop',      #- no operation.                                                Used: nop
+    'syscall',  #- system call,                                                 Used: syscall
+    'break',    #- declare program error.                                       Used: break
 
     #extra
-    'mflo',
-    'mtcl',
-    'la'
+    'mflo',     #- Move from lo.                                                Used: mflo $a. Needs: [$lo], Gen: [$a]
+    'mtlo',     #- Move to lo.                                                  Used: mtlo $a. Needs: [$a], Gen: [$lo]
+    'mfhi',     #- Move from hi.                                                Used: mfhi $a. Needs: [$hi], Gen: [$a]
+    'mthi',     #- Move to hi.                                                  Used: mthi $a. Needs: [$a], Gen: [$hi]
+    'mtc1',     #- From int reg to float reg.                                   Used: mtc1 $a $b. Needs: [$a], Gen: [$b]
+    'mfc1',     #- From float reg to int reg.                                   Used: mfc1 $a $b. Needs: [$b], Gen: [$a]
+    'la',       #- Load address.                                                Used: la $a {label}. Needs: [], Gen: [$a]
+    'lui'       #- Load upper immidiate:                                        Used: lui $a {val}. Needs: [], Gen: [$a]
 ]
 
 
@@ -111,7 +144,7 @@ registers = [
     r'\$f([1-2][0-9]|3[0-1]|[0-9])', #floating point registers $f0 - $f31
     r'\$fcc', #floating point condition code
     r'\$([1-2][0-9]|3[0-1]|[0-9])', #extra registers $0-$31 (not in spec! :s)
-    r'\$fp',
+    r'\$fp' #Frame pointer
     ]
 
 
