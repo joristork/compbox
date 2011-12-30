@@ -26,7 +26,6 @@ class BlockOptimiser(object):
     def __init__(self, block = None, peephole_size = None):
         """ By default the peephole size is that of the basic block """
 
-        self.verbosity = 0
         self.block = block
         if not peephole_size:
             self.p_size = len(block)
@@ -155,7 +154,7 @@ class ConstantFold(BlockOptimiser):
                 self.peephole[i] = Instr('li',[ins.args[0], hex(fold)])
                 consts[self.peephole[i].args[0].expr] = self.peephole[i].args[1]
                 optimised = True
-                if self.verbosity >= 1 : print 'constant folded'
+                self.logger.info('constant folded')
         return optimised
 
 
@@ -191,7 +190,7 @@ class AlgebraicTransformations(BlockOptimiser):
                 if n % 1 == 0:
                     newins = Instr('sra', [ins.args[0], consts[ins.args[1].expr], n])
                     self.peephole[i] = newins
-                    if self.verbosity >= 1 : print 'algebraic transformed (div->sra)'
+                    self.logger.info('algebraic transformed (div->sra)')
                     optimised = True
         return optimised
 
@@ -238,15 +237,15 @@ class CopyPropagation(BlockOptimiser):
                     argsize = len(ins2.args)
                     if copy.expr in args[1:argsize]:
                         one = args[1:argsize].index(copy.expr) + 1
-                        if self.verbosity >= 2 : print ' being replaced... ',self.peephole[i+1+i2]
+                        self.logger.debug(' being replaced... '+str(self.peephole[i+1+i2]))
                         ins2.args[one] = orig
                         if args[1:argsize].count(copy.expr) == 2:
                             two=args[one+1:argsize].index(copy.expr)+one+1
                             ins2.args[two] = orig
                         self.peephole[i+1+i2] = ins2
-                        if self.verbosity >= 2 : print 'new instruction: ',self.peephole[i+1+i2]
+                        self.logger.debug('new instruction: '+str(self.peephole[i+1+i2]))
                         optimised = True
-                        if self.verbosity >= 1 : print 'copy propagated'
+                        self.logger.info('copy propagated')
 
                     if (copy.expr==args[0]) | (orig.expr in args[0]):
                         return optimised
