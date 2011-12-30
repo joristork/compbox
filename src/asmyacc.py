@@ -1,15 +1,14 @@
-# ------------------------------------------------------------
-# asmyacc.py
 #
 # assembly parser
 #
 # Run this module without arguments to use the interactive
 # parser. Give a filename as argument to parse a file.
-# ------------------------------------------------------------
+#
 
 import yacc
-from ir import *
 import sys
+
+from ir import *
 
 # Get the token map from the lexer.  This is required.
 from asmlex import tokens
@@ -91,6 +90,7 @@ def p_int_minus(p):
     '''int : '-' INT'''
     p[0] = -1*p[2]
 
+
 def p_int(p):
     'int : INT'
     p[0] = p[1]
@@ -121,7 +121,7 @@ parser = yacc.yacc()
 
 
 if __name__ == '__main__':
-
+    # file
     if len(sys.argv) > 1:
         raise_on_error = True
         counter = 1
@@ -132,7 +132,7 @@ if __name__ == '__main__':
            counter +=1
            #if counter % 50 == 0: raw_input('pres key')
         print 'errors: %d\n' % error_count 
-
+    # interactive
     else:
         while True:
            try:

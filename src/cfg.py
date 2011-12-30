@@ -24,7 +24,7 @@ class BasicBlock(object):
             self.instructions = []
         else:
             self.instructions = instr
-        if name:
+        if name: 
             self.name = name
         else:
             self.name = "Nameless"
@@ -49,6 +49,11 @@ class BasicBlock(object):
 
     def __str__(self):
         return str(self.instructions)
+
+    def print_block(self):
+            print "\nBlockname: ", self.name
+            for ins in self.instructions:
+                print ins        
     
 
 
@@ -70,16 +75,17 @@ class CFG(object):
         self.edges = []
         self.blocks = []
         self.load_flat(flat_ir)
-        self.cfg_to_diagram()
+
 
         
     def load_flat(self, flat_ir):
         """
         Load list of expression objects in Control Flow Graph.
         """
-        self.blocks.append(BasicBlock())
         j = 0
-        branches = [
+        self.blocks.append(BasicBlock(name=str(j)))
+        j += 1
+        brenches = [
             'beq',   #- branch == 0 
             'bne',   #- branch != 0 
             'blez',  #- branch <= 0 
@@ -107,7 +113,7 @@ class CFG(object):
                 # If previous instruction was a brench, add a edge from the
                 # previous block to the new block.
                 if (i > 0 and type(flat_ir[i-1]) == Instr
-                    and flat_ir[i-1].instr in branches 
+                    and flat_ir[i-1].instr in brenches 
                     and len(self.blocks) > 1):
                     self.edges.append((self.blocks[-2].name, self.blocks[-1].name))
                  
@@ -118,7 +124,7 @@ class CFG(object):
                 # the previous block and the new one.
                 if (i > 0 
                     and flat_ir[i-1] not in ['j', 'jr'] 
-                    and len(self.blocks) > 1):
+                    and len(self.blocks) > 0):
                     self.edges.append((self.blocks[-1].name, expr.expr))
                     
                 self.blocks.append(BasicBlock([expr], expr.expr))
@@ -126,13 +132,13 @@ class CFG(object):
                 # If previous instruction was a brench, add a edge from the
                 # previous block to the new block.                
                 if (i > 0 and type(flat_ir[i-1]) == Instr
-                    and flat_ir[i-1].instr in branches 
+                    and flat_ir[i-1].instr in brenches 
                     and len(self.blocks) > 1):
                     self.edges.append((self.blocks[-2].name, self.blocks[-1].name))
                     
                 self.blocks[-1].append(expr)
 
-    def cfg_to_diagram(self):
+    def cfg_to_diagram(self, name="CFG.png"):
         """
         Generates a diagram using the edges that were found when load_flat
         was executed. The result is saved in a png image file.
@@ -141,20 +147,22 @@ class CFG(object):
         A = pgv.AGraph(directed=True)
         for edge in self.edges: 
             A.add_edge(edge[0], edge[1])
+        for block in self.blocks:
+            if len(self.get_out_edges(block)) + len(self.get_in_edges(block)) == 0:
+                A.add_node(block.name)
         A.layout()
-        A.draw("CFG.png")
+        A.draw(name)
 
-    def print_block(self, block=None, name=None):
+    def print_cfg(self):
         """
-        Prints the instructions of a block.
+        Prints the name of each block, its instructions and its edges.
+
+        NOTE: This function is not to be used to create assembly output.
         """
-        if block and name and block.name != name:
-            raise Exception("You passed a name and a block, but the two don't correspond:\
-block.name != name")
-        if block and not name:
-            print block
-        elif name:
-            print self.get_block(name)
+        for block in self.blocks:
+            block.print_block()
+            print "Edges: (out)", self.get_out_edges(block),\
+            " (in)", self.get_out_edges(block)
 
     def remove_block(self, name):
         """
@@ -166,38 +174,39 @@ block.name != name")
                 del self.blocks[i]
                 removed = True
                 break
-        for i,edge in enumerate(self.edges):
-            if name in edge:
-                self.edges.remove(edge)
+
+        rm = []
+        for edge in self.edges:
+            if name == edge[0] or name == edge[1]:
+                rm.append(edge)
+        for r in rm:
+            self.edges.remove(r)
         return removed
     
-    def get_out_edges(self, block=None, name=None):
+    def get_out_edges(self, block):
         """
         Returns all (a list) edges that come out of the given block.
         You can pass the name of a block or the 
         """
         _out = []
-        if block and name and block.name != name:
-            raise Exception("You passed a name and a block, but the two don't correspond:\
-block.name != name")
-        else:
-            for edge in self.edges:
-                if (block and edge[0] == block.name) or (name and edge[0] == name):
-                    _out.append(edge)
+        if type(block) == str:
+            block = self.get_block(block)
+        
+        for edge in self.edges:
+            if (edge[0] == block.name):
+                _out.append(edge)
         return _out
         
-    def get_in_edges(self, block=None, name=None):
+    def get_in_edges(self, block):
         """
         Returns all (a list) edges that go into the given block.
         """
         _in = []
-        if block and name and block.name != name:
-            raise Exception("You passed a name and a block, but the two don't correspond:\
-block.name != name")
-        else:    
-            for edge in self.edges:
-                if (block and edge[1] == block.name) or (name and edge[1] == name):
-                    _in.append(edge)
+        if type(block) == str:
+            block = self.get_block(block) 
+        for edge in self.edges:
+            if (edge[1] == block.name):
+                _in.append(edge)
         return _in
     
     def get_blockname(self, block):
