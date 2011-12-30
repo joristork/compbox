@@ -118,7 +118,7 @@ def main():
     parser.add_option("-d", "--dest", dest="filename",
                       help="save result in FILENAME")
     parser.add_option("-v", "--verbosity", dest="verbosity",
-                      help="set verbosity")
+            help="set verbosity (0: critical, 1: error, 2: warning, 3: info, 4: debug)")
 
     (options, args) = parser.parse_args()
     if len(args) != 1:
