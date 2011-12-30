@@ -1,11 +1,9 @@
-# ------------------------------------------------------------
-# asmlex.py
 #
 # assembly lexer
 #
-# Run this module without arguments to use the interative
+# Run this module without arguments to use the interactive
 # lexer. Give a filename as argument to tokenise a file.
-# ------------------------------------------------------------
+#
 
 import lex
 import sys
@@ -70,7 +68,7 @@ def t_error(t):
 lexer = lex.lex()
 
 if __name__ == '__main__':
-    # test
+    # file
     if len(sys.argv) > 1:
         lex.input(''.join(open(sys.argv[1], 'r').readlines()))
         while 1:
@@ -78,6 +76,7 @@ if __name__ == '__main__':
             if not tok: break
             print tok
         print 'errors: %d\n' % error_count
+    # interactive
     else:
         while True:
            try:
