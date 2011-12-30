@@ -17,6 +17,7 @@ from ir import Instr
 import math
 from peephole import Peephole, Peeper
 from uic import copy_prop_targets, copy_prop_unsafe
+import logging
 
 class BlockOptimiser(object):
     """ Parent class for the various block optimisations.  """
@@ -55,6 +56,8 @@ class BlockOptimiser(object):
         compiles a dict of (register,constant) pairs, with the constant
         corresponding to the last value in the given register before the
         ``before'' register 
+        we can improve this function by keeping track of constants, e.g. after
+        moves.
         
         """
         consts = {}
@@ -158,6 +161,7 @@ class ConstantFold(BlockOptimiser):
 
     def suboptimisation(self):
         """ if 2+ compile time constants, tries constant folding """
+        self.logger = logging.getLogger('ConstantFold')
         optimised = False
         for i, ins in enumerate(self.peephole):
             if isinstance(ins,Instr):
@@ -174,7 +178,12 @@ class AlgebraicTransformations(BlockOptimiser):
 
 
     def divd_to_sra(self, i, ins, opt, consts):
-        """ shift-right arithmetic is faster than division...  """
+        """ 
+        shift-right arithmetic is faster than division... 
+        Needs fixing: div.d only ever uses $fn (floating point) registers. li
+        instructions (used to find constants) only use $n registers. 
+       
+       """
         optimised = opt
         if ins.instr == 'div.d':
             if (ins.args[1].expr in consts) & (ins.args[2].expr in consts):
@@ -190,6 +199,7 @@ class AlgebraicTransformations(BlockOptimiser):
     def suboptimisation(self):
         """   """
         
+        self.logger = logging.getLogger('AlgebraicTransformations')
         optimised = False
         for i, ins in enumerate(self.peephole):
             if isinstance(ins,Instr):
@@ -252,6 +262,7 @@ class CopyPropagation(BlockOptimiser):
         
         """
 
+        self.logger = logging.getLogger('CopyPropagation')
         optimised = False
         for i, ins in enumerate(self.peephole):
             if isinstance(ins,Instr):
