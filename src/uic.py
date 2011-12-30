@@ -16,6 +16,52 @@ Description:
 #
 
 
+"""
+Instructions (keys) that respectively assign to the registers in args[(values)]
+
+"""
+assign_to = {
+
+    'lw'    :   0   ,
+    'move'  :   0   ,
+    'mov.d' :   0   ,
+    'mov.s' :   0   ,
+    'sll'   :   0   ,
+    'addu'  :   0   ,
+    'l.s'   :   0   ,
+    'l.d'   :   0   ,
+    'l.a'   :   0   ,
+    'sub.u' :   0   ,
+    'l.s'   :   0   ,
+    'li'    :   0   ,
+    'add.d' :   0   ,
+    'div.d' :   0   ,
+    'div.s' :   0   ,
+    'div'   :   0   ,
+    'sub.d' :   0   ,
+    'cvt.d.w':  0   ,
+    'cvt.d.s':  0   ,
+    'cvt.s.d':  0   ,
+    'cvt.s.w':  0   ,
+    'add.s' :   0   ,
+    'lb'    :   0   ,
+    'abs.d' :   0   ,
+    'sra'   :   0   ,
+    'dlw'   :   0   ,
+    'neg.d' :   0   ,
+    'sub.s' :   0   ,
+    'srl'   :   0   ,
+    'lbu'   :   0   ,
+    'neg.s' :   0   ,  
+    'or'    :   0   ,
+    'xori'  :   0  #,
+    #'mtc1'  :   1  check instruction
+    #'mfc1'  :   1  check instruction
+    #'dmfc1'  :   1  check instruction
+
+    }
+
+
 """ 
 If copy propagate optimiser encounters one of these instructions during a
 scan of instructions below a copy, no instructions beyond that instruction

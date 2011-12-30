@@ -3,10 +3,12 @@ File:         block_optimise.py
 Course:       Compilerbouw 2011
 Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
 
-The block optimiser module
 
 Description:
-    blah
+    Defines the various subclasses of block optimiser. Currently implemented:
+        ConstantFold
+        DeadCode
+        CopyPropagation
 
 """
 
@@ -16,8 +18,9 @@ import ir
 from ir import Instr
 import math
 from peephole import Peephole, Peeper
-from uic import copy_prop_targets, copy_prop_unsafe
+from uic import copy_prop_targets, copy_prop_unsafe, assign_to
 import logging
+
 
 class BlockOptimiser(object):
     """ Parent class for the various block optimisations.  """
@@ -76,26 +79,19 @@ class BlockOptimiser(object):
     def optimise(self):
         """ If block assigned, runs sub-optimisation until exhausted. """
 
+        no_change = True
         if not self.block: 
             """ raise an exception here """
-            return
+            return no_change
         peeper = Peeper(self.block, self.p_size)
+        optimised = False
         for peephole in peeper:
             self.peephole = peephole
-            while self.suboptimisation():
-                pass
-
-
-
-class CommonSubexpressions(BlockOptimiser):
-    """ Block optimisation: duplicate subexpressions -> variables"""
-
-    def suboptimisation(self):
-        """ If duplicate subexpression found within peephole,  """
-
-        optimised = False
-
-        return optimised
+            optimised = True
+            while optimised:
+                optimised = self.suboptimisation()
+                no_change = no_change & (not optimised)
+        return no_change
 
 
 
@@ -171,44 +167,6 @@ class ConstantFold(BlockOptimiser):
 
 
 
-class AlgebraicTransformations(BlockOptimiser):
-    """ contains various algebraic transformation optimisations  """
-    # Need to look for values of variables
-
-
-    def divd_to_sra(self, i, ins, opt, consts):
-        """ 
-        shift-right arithmetic is faster than division... 
-        Needs fixing: div.d only ever uses $fn (floating point) registers. li
-        instructions (used to find constants) only use $n registers. 
-       
-       """
-        optimised = opt
-        if ins.instr == 'div.d':
-            if (ins.args[1].expr in consts) & (ins.args[2].expr in consts):
-                n = math.log(consts[ins.args[2].expr], 2)
-                if n % 1 == 0:
-                    newins = Instr('sra', [ins.args[0], consts[ins.args[1].expr], n])
-                    self.peephole[i] = newins
-                    self.logger.info('algebraic transformed (div->sra)')
-                    optimised = True
-        return optimised
-
-
-    def suboptimisation(self):
-        """   """
-        
-        self.logger = logging.getLogger('AlgebraicTransformations')
-        optimised = False
-        for i, ins in enumerate(self.peephole):
-            if isinstance(ins,Instr):
-                consts = self.find_constants(i)
-                optimised = self.divd_to_sra(i, ins, optimised, consts)
-                #TODO: any other algebraic opts? (sla not available)
-        return optimised
-
-
-
 class CopyPropagation(BlockOptimiser):
     """ after copy, propagate original variable where copy unaltered """
 
@@ -271,47 +229,63 @@ class CopyPropagation(BlockOptimiser):
 
 
 class DeadCode(BlockOptimiser):
-    """   """
+    """ 
+    Finds and removes instructions that assign a value that is then never used.  
+    
+    """
+
+
+    def subscan(self, i, ins, opt, cand_reg_index):
+        """ 
+        Searches subsequent instructions, and: stops if candidate register is
+        used; or removes the candidate instruction if register is overwritten.
+        Note: the only instruction object without an args attribute is the nop
+        instruction. Such instructions are ignored.
+
+        """
+        optimised = opt
+        for i2, ins2 in enumerate(self.peephole[i+1:len(self.peephole)]):
+            candidate_reg = ins.args[cand_reg_index]
+            ins2_is_instruction = isinstance(ins,Instr)
+            args = []
+            if ins2_is_instruction:
+                try:
+                    for arg in ins2.args:
+                        if isinstance(arg,str) | isinstance(arg,int) :
+                            args.append(arg)
+                        else:
+                            args.append(arg.expr)
+                except AttributeError:
+                    continue
+            if not ins2_is_instruction:
+                continue
+            elif candidate_reg.expr not in args:
+                continue
+            elif str(ins2.instr) in assign_to:
+                assigned_to_index = assign_to[str(ins2.instr)]
+                pre_args = args[0:assigned_to_index]
+                post_args = args[assigned_to_index+1:len(args)]
+                if candidate_reg.expr in pre_args+post_args:
+                    return optimised
+                else: 
+                    del self.peephole[i]
+                    optimised = True
+                    self.logger.info('instruction removed')
+                    return optimised
+            else: return optimised
+        return optimised
+
 
     def suboptimisation(self):
         """   """
         
         optimised = False
-
-        return optimised
-
-
-
-class TempVarRename(BlockOptimiser):
-    """   """
-
-    def suboptimisation(self):
-        """   """
-
-        optimised = False
-
-        return optimised
-
-
-
-class ExchangeIndependentStatements(BlockOptimiser):
-    """   """
-
-    def suboptimisation(self):
-        """   """
-
-        optimised = False
-
-        return optimised
-
-
-
-class MachineDependentTransformations(BlockOptimiser):
-    """   """
-
-    def suboptimisation(self):
-        """   """
-
-        optimised = False
-
+        self.logger = logging.getLogger('DeadCode')
+        candidate = None
+        for i, ins in enumerate(self.peephole):
+            if not isinstance(ins,Instr):
+                continue
+            elif str(ins.instr) in assign_to:
+                cand_reg_index = assign_to[str(ins.instr)]
+                optimised = self.subscan(i, ins, optimised, cand_reg_index)
         return optimised

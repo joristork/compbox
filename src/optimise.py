@@ -81,16 +81,30 @@ class Optimiser(object):
         self.logger.info('creating graph for each frame')
         graphs = [CFG(frame) for frame in frames]
 
-        # work in progress: optimise graphs (block level)
-        self.logger.info('optimising')
         for graph in graphs:
             for block in graph.blocks:
-                ag_opt = b_opt.AlgebraicTransformations(block)
-                ag_opt.optimise()
+
                 cf_opt = b_opt.ConstantFold(block)
-                cf_opt.optimise()
                 cp_opt = b_opt.CopyPropagation(block)
-                cp_opt.optimise()
+                dc_opt = b_opt.DeadCode(block)
+
+                done = False
+                no_subopt_changes = True
+                i = 0
+
+                while (not done):
+                    done = True
+                    i += 1
+                    self.logger.info('peephole optimising, pass '+str(i))
+
+                    no_subopt_changes = cf_opt.optimise()
+                    done = done & no_subopt_changes
+
+                    no_subopt_changes = cp_opt.optimise()
+                    done = done & no_subopt_changes
+                    
+                    no_subopt_changes = dc_opt.optimise()
+                    done = done & no_subopt_changes
 
         self.logger.info('joining graphs to frames')
         frames = [graph.cfg_to_flat() for graph in graphs]

@@ -30,7 +30,7 @@ class Peephole(object):
         if self.counter >= self.size:
             raise StopIteration
         else:
-            self.current_instruction = self.instructions[self.counter]
+            self.current_instruction = self.block[self.start_index + self.counter]
             self.counter += 1
         return self.current_instruction
 
@@ -50,10 +50,20 @@ class Peephole(object):
         self.block[self.start_index + index] = value
 
 
+    def __delitem__(self, index):
+        """   """
+
+        try:
+            del self.block.instructions[self.start_index + index]
+        except TypeError:
+            del self.block.instructions[self.start_index + index.start:self.start_index + index.stop]
+        self.size = self.size - 1
+
+
     def __len__(self):
         """   """
 
-        return len(self.instructions)
+        return len(self.block[self.start_index:self.size])
 
 
 
