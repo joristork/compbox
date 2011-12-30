@@ -1,0 +1,58 @@
+\documentclass[10pt,a4paper]{article}
+\usepackage[latin1]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\author{Lucas Swartsenburg\\6174388}
+\title{Take-home opgave 1. Compilerbouw}
+\begin{document}
+\maketitle
+
+
+\subsection*{1a}
+$B3 \rightarrow B1:{B1,B3}$ \\
+$B4 \rightarrow B2:{B2,B4}$ \\
+$B4 \rightarrow B1:{B1,B2,B4}$
+
+\subsection*{1b}
+$gen[B1]= \{2,3,4\} $\\
+$kill[B1]= \{1,6,7,9\} $\\
+\\
+$gen[B2]= \{5,6\} $\\
+$kill[B2]= \{4,7\} $\\
+\\
+$gen[B3]= \{7\} $\\
+$kill[B3]= \{4,6\} $\\
+\\
+$gen[B4]= \{8,9\} $\\
+$kill[B4]= \{1,3\} $\\
+
+\subsection*{1c}
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline 
+Block B   & \multicolumn{2}{|c|}{Initial}   & \multicolumn{2}{|c|}{Pass 1}     & \multicolumn{2}{|c|}{Pass 2}     \\  
+\cline{2-7}
+          & $in[B]$        & $out[B]$       & $in[B]$        & $out[B]$        & $in[B]$        & $out[B]$        \\ 
+\hline                                                                                                      
+B1        & 0 0000 0000    & 0 1110 0000    & 0 0000 0111    &  0 1110 0010    & 0 1101 1111    &  0 1111 0010    \\ 
+B2        & 0 0000 0000    & 0 0001 1000    & 0 1110 0011    &  0 1101 1011    & 0 1111 1011    &  0 1101 1011    \\ 
+B3        & 0 0000 0000    & 0 0000 0100    & 0 1110 0000    &  0 1100 0100    & 0 1110 0010    &  0 1100 0110    \\ 
+B4        & 0 0000 0000    & 0 0000 0011    & 0 0001 1000    &  0 0001 1011    & 0 1101 1011    &  0 1001 1011    \\ 
+\hline 
+\end{tabular} 
+\\
+\begin{tabular}{|c|c|}
+\hline 
+\multicolumn{2}{|c|}{Pass 3}     \\  
+\hline
+$in[B]$        & $out[B]$        \\ 
+\hline            
+0 1101 1111    &  0 1111 0010    \\ 
+0 1111 1011    &  0 1101 1011    \\ 
+0 1111 0010    &  0 1101 0110    \\ 
+0 1101 1011    &  0 1001 1011    \\ 
+\hline 
+\end{tabular} 
+
+
+\end{document}

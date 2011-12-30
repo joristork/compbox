@@ -1,76 +1,21 @@
-#!/usr/bin/env python
+""" 
+File:         block_optimise.py
+Course:       Compilerbouw 2011
+Author:       Joris Stork
 
-from asmyacc import parser
+The block optimiser module
+
+Description:
+    blah
+
+"""
+
+
 from cfg import BasicBlock
 from ir import Instr
-import sys
 import math
-
-
-
-class Peephole(object):
-    """ Contains an iterable list of instructions """
-
-    def __init__(self, block, start, size):
-        self.block = block
-        self.start_index = start
-        self.size = size
-        self.instructions = self.block[start:size]
-        self.counter = 0
-
-
-    def __iter__(self):
-        return self
-
-
-    def next(self):
-        if self.counter >= self.size:
-            raise StopIteration
-        else:
-            self.current_instruction = self.instructions[self.counter]
-            self.counter += 1
-        return self.current_instruction
-
-
-    def __getitem__(self, index):
-        """   """
-
-        try:
-            return self.block[self.start_index + index]
-        except TypeError:
-            return self.block[self.start_index + index.start:self.start_index + index.stop]
-
-
-    def __setitem__(self, index, value):
-        """   """
-
-        self.block[self.start_index + index] = value
-
-
-
-class Peeper(object):
-    """   """
-
-    def __init__(self, block, peephole_size):
-        self.block = block
-        """ raise an error here if attempt to set size too big """
-        self.p_size = peephole_size
-        self.counter = 0
-
-
-    def __iter__(self):
-        return self
-
-
-    def next(self):
-        if self.p_size + self.counter > len(self.block):
-            raise StopIteration
-        else:
-            self.peephole = Peephole(self.block, self.counter, self.p_size)
-            self.counter += 1
-        return self.peephole
-        
-
+from peephole import Peephole, Peeper
+from uic import copy_prop_targets
 
 class BlockOptimiser(object):
     """ Parent class for the various block optimisations.  """
@@ -89,7 +34,7 @@ class BlockOptimiser(object):
 
     def set_block(self, block):
         """ Optimiser can be re-assigned to a new block  """
-
+        
         self.block = block
 
 
@@ -112,7 +57,6 @@ class BlockOptimiser(object):
         
         """
         consts = {}
-        if self.verbosity == 1 : print 'self.peephole[0:before]: ',self.peephole[0:before]
         for ins in self.peephole[0:before]:
             if isinstance(ins,Instr):
                 if ins.instr == 'li':
@@ -155,30 +99,21 @@ class CommonSubexpressions(BlockOptimiser):
 class ConstantFold(BlockOptimiser):
     """ replaces arithmetic expression with only constants, with value """
 
-    # need to look for last values of variables from point of view of operation
-    # in question
 
     def addu(self, i, ins, opt, consts):
-        #NOTE: semantically inaccurate, but should be ok (explain in report)
         """ 
         replaces addu instruction with value. Though not guaranteed to replicate
         unsigned behaviour, should be ok for benchmarks (c.f. report)
         
         """    
         optimised = opt
-        if not isinstance(ins,Instr):
-            return optimised
         if ins.instr == 'addu':
-            if self.verbosity == 2 : print 'found an addu\n'
-            if ins.args[1] in consts:
-                if ins.args[2] in consts:
-                    newins = Instr('li',[ins.args[0],consts[ins.args[1]]+consts[ins.args[2]]])
-                    if self.verbosity == 1 : print 'about to replace: ', self.peephole[i]
-                    self.peephole[i] = newins
-                    consts[newins.args[0]] = newins.args[1]
-                    if self.verbosity == 1 : print 'did a constant fold\n'
-                    if self.verbosity == 2 : print 'did a constant fold\n'
-                    optimised = True
+            if (ins.args[1] in consts) & (ins.args[2] in consts):
+                newins = Instr('li',[ins.args[0],consts[ins.args[1]]+consts[ins.args[2]]])
+                self.peephole[i] = newins
+                consts[newins.args[0]] = newins.args[1]
+                if self.verbosity == 2 : print 'did a constant fold\n'
+                optimised = True
         return optimised
 
 
@@ -186,13 +121,10 @@ class ConstantFold(BlockOptimiser):
         """ if 2+ compile time constants, tries constant folding """
         optimised = False
         for i, ins in enumerate(self.peephole):
-            if self.verbosity == 1 : print 'constantfold: ins under scrutiny: ',str(ins),'\n'
-            consts = self.find_constants(i)
-            if len(consts) > 1:
-                if self.verbosity == 1 : print 'constantfold: found more than one constant\n'
-                if self.verbosity == 1 : print 'constants: ',consts,'\n'
-                optimised = self.addu(i, ins, optimised, consts)
-        if self.verbosity == 1 : print 'constantfold suboptimisation done. block[8]: ', str(self.peephole[8])
+            if isinstance(ins,Instr):
+                consts = self.find_constants(i)
+                if len(consts) > 1:
+                    optimised = self.addu(i, ins, optimised, consts)
         return optimised
 
 
@@ -201,28 +133,18 @@ class AlgebraicTransformations(BlockOptimiser):
     """ contains various algebraic transformation optimisations  """
     # Need to look for values of variables
 
-    def divd_to_sra(self, i, ins, opt):
+    def divd_to_sra(self, i, ins, opt, consts):
         """ shift-right arithmetic is faster than division...  """
         optimised = opt
-        if not isinstance(ins,Instr):
-            return optimised
-        if (ins.instr == 'div.d'):
-            n = math.log(ins.args[2], 2)
-            if n % 1 == 0:
-                newins = Instr('sra', [ins.args[0], ins.args[1], n])
-                self.peephole[i] = newins
-                if self.verbosity == 1 : print 'changed a div to an sra'
-                optimised = True
+        if ins.instr == 'div.d':
+            if (ins.args[1] in consts) & (ins.args[2] in consts):
+                n = math.log(consts[ins.args[2]], 2)
+                if n % 1 == 0:
+                    newins = Instr('sra', [ins.args[0], consts[ins.args[1]], n])
+                    self.peephole[i] = newins
+                    if self.verbosity == 2 : print 'changed a div to an sra'
+                    optimised = True
         return optimised
-
-
-# ADD and MULT too different for simple conversion (add uses rd,  mult uses hi
-# and lo registers)    
-#    def mult_to_add(self,i, ins, opt):
-#        """ addition is faster than multiplication """
-#        optimised = opt
-#        if ins.instr == 'mult':
-#        return optimised
 
 
     def suboptimisation(self):
@@ -230,8 +152,10 @@ class AlgebraicTransformations(BlockOptimiser):
         
         optimised = False
         for i, ins in enumerate(self.peephole):
-            optimised = self.divd_to_sra(i, ins, optimised)
-            #TODO: any other algebraic opts? (sla not available)
+            if isinstance(ins,Instr):
+                consts = self.find_constants(i)
+                optimised = self.divd_to_sra(i, ins, optimised, consts)
+                #TODO: any other algebraic opts? (sla not available)
         return optimised
 
 
@@ -239,15 +163,58 @@ class AlgebraicTransformations(BlockOptimiser):
 class CopyPropagation(BlockOptimiser):
     """ after copy, propagate original variable where copy unaltered """
 
+    def propagate_from_move(self, i, ins, opt):
+        """ if a move, substitutes subsequent uses of unaltered copy value """
+        optimised = opt
+        if ins.instr == 'move': 
+            if self.verbosity == 1 : print 'found a move\n'
+            safe = True
+            orig = ins.args[1]
+            if self.verbosity == 1 : print 'orig: ',orig,'\n'
+            copy = ins.args[0] # nb: move not explicity defined for simplescalar
+            if self.verbosity == 1 : print 'copy: ',copy,'\n'
+            for i2, ins2 in enumerate(self.peephole[i+1:len(self.peephole)]):
+                valid_target = False
+                if ins2.instr in copy_prop_targets:
+                    valid_target = True
+                # ripe for refining: copy value might be used not written to
+                if self.verbosity == 1 : print 'looking for copy in: ',str(ins2),'\n'
+                if copy not in ins2.args:
+                    continue
+                elif (copy in ins2.args[0]) & valid_target:
+                    if self.verbosity == 1 : print 'copy possibly assigned to\n'
+                    if safe & (ins2.args.count(copy) > 1):
+                        first = ins2.args.index(copy)
+                        second = ins2.args[first+1:len(ins2.args)].index(copy)
+                        second = second + first + 1
+                        ins2.args[second] = orig
+                        self.peephole[i+1+i2] = ins2
+                        if self.verbosity == 2 : print 'copy propagation: substituted original reference for pointer.\n'
+                        if self.verbosity == 1 : print 'still a safe propagation target: substituted\n'
+                    safe = False
+                elif valid_target & safe:
+                    if self.verbosity == 1 : print 'safe propagation target: substituted\n'
+                    ins2.args[ins2.args.index(copy)] = orig
+                    self.peephole[i+1+i2] = ins2
+                    optimised = True
+                    if self.verbosity == 2 : print 'copy propagation: substituted original reference for pointer.\n'
+                else:
+                    if self.verbosity == 1 : print 'unknown situation: assume danger\n'
+                    safe = False
+        return optimised
+                            
+
     def suboptimisation(self):
         """ 
         finds copies; then: if unaltered copy used later, substitute with
-        original; else ignore (dead code)  
+        original; else ignore
         
         """
 
         optimised = False
-
+        for i, ins in enumerate(self.peephole):
+            if isinstance(ins,Instr):
+                optimised = self.propagate_from_move(i, ins, optimised)
         return optimised
 
 
@@ -297,20 +264,3 @@ class MachineDependentTransformations(BlockOptimiser):
         optimised = False
 
         return optimised
-
-
-def main():
-    if len(sys.argv) > 1:
-        raise_on_error = True
-        instruction_list = []
-        for line in open(sys.argv[1], 'r').readlines():
-           if not line.strip(): continue
-           istruction_list.append(parser.parse(line))
-        print 'errors: %d\n' % error_count    
-        optimize_flat(instruction_list)
-    else:
-        pass
-
-
-if __name__ == '__main__':
-    main()

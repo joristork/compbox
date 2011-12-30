@@ -77,10 +77,10 @@ class Optimiser(object):
         # work in progress: optimise graphs (block level)
         for graph in graphs:
             for block in graph.blocks:
-                #optimiser = AT(block)
-                #optimiser.optimise()
-                optimiser = CF(block)
+                optimiser = AT(block)
                 optimiser.optimise()
+                cf_optimiser = CF(block)
+                cf_optimiser.optimise()
 
         frames = [graph.cfg_to_flat() for graph in graphs]
         self.flat = sum(frames, [])
