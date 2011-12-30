@@ -1,26 +1,55 @@
+""" 
+File:         uic.py
+Course:       Compilerbouw 2011
+Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
+
+The "useful instruction categories" module
+
+Description:
+    blah
+
+"""
+
+
 #
 # IR objects
 #
 
 
+""" 
+If copy propagate optimiser encounters one of these instructions during a
+scan of instructions below a copy, no instructions beyond that instruction
+may be considered safe 
+
+"""
+copy_prop_unsafe = [
+
+    ]
+
+
+""" 
+These instruction types may be subject to substituting copy references with
+original references as part of a copy propagation optimisation
+
+"""
 copy_prop_targets = [
-    'addu', #- integer add unsigned 
-    'sll',  #- shift left logical 
-    'add',  #- integer add 
-    'sub',  #- subtract 
-    'subu', #- integer subtract unsigned 
-    'mult', #- integer multiply 
-    'multu',#- integer multiply unsigned 
-    'div',  #- integer divide 
-    'divu', #- integer divide unsigned 
-    'and',  #- logical AND 
-    'or',   #- logical OR 
-    'xor',  #- logical XOR 
-    'nor',  #- logical NOR 
-    'srl',  #- shift right logical 
-    'sra',  #- shift right arithmetic 
-    'slt',  #- set less than 
-    'sltu', #- set less than unsigned 
+    'addu',     #- integer add unsigned 
+    'sll',      #- shift left logical 
+    'add',      #- integer add 
+    'sub',      #- subtract 
+    'subu',     #- integer subtract unsigned 
+    'mult',     #- integer multiply 
+    'multu',    #- integer multiply unsigned 
+    'div',      #- integer divide 
+    'divu',     #- integer divide unsigned 
+    'and',      #- logical AND 
+    'or',       #- logical OR 
+    'xor',      #- logical XOR 
+    'nor',      #- logical NOR 
+    'srl',      #- shift right logical 
+    'sra',      #- shift right arithmetic 
+    'slt',      #- set less than 
+    'sltu',     #- set less than unsigned 
     'add.s',    #- single-precision (SP) add
     'add.d',    #- double-precision (DP) add
     'sub.s',    #- SP subtract
@@ -35,10 +64,11 @@ copy_prop_targets = [
     'neg.d',    #- DP negation
     'sqrt.s',   #- SP square root
     'sqrt.d',   #- DP square root
-    'cvt',       #- int., single, double conversion
+    'cvt',      #- int., single, double conversion
     'c.s',      #- SP compare
     'c.d',      #- DP compare
     ]
+
 
 control_instructions = [
     'j',     #- jump 

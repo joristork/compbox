@@ -1,7 +1,7 @@
 """ 
 File:         peephole.py
 Course:       Compilerbouw 2011
-Author:       Joris Stork
+Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
 
 The peephole module
 

@@ -9,8 +9,7 @@ from optparse import OptionParser
 from asmyacc import parser
 from ir import Raw
 from cfg import CFG
-from block_optimise import AlgebraicTransformations as AT
-from block_optimise import ConstantFold as CF
+import block_optimise as b_opt
 
 
 
@@ -77,10 +76,12 @@ class Optimiser(object):
         # work in progress: optimise graphs (block level)
         for graph in graphs:
             for block in graph.blocks:
-                optimiser = AT(block)
-                optimiser.optimise()
-                cf_optimiser = CF(block)
-                cf_optimiser.optimise()
+                ag_opt = b_opt.AlgebraicTransformations(block)
+                ag_opt.optimise()
+                cf_opt = b_opt.ConstantFold(block)
+                cf_opt.optimise()
+                cp_opt = b_opt.CopyPropagation(block)
+                cp_opt.optimise()
 
         frames = [graph.cfg_to_flat() for graph in graphs]
         self.flat = sum(frames, [])
