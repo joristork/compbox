@@ -5,6 +5,7 @@
 #
 
 from optparse import OptionParser
+import logging
 
 from asmyacc import parser
 from ir import Raw
@@ -41,11 +42,15 @@ class Optimiser(object):
      
     """
     
-    def __init__(self, lines):
+    def __init__(self, lines, verbosity = 0):
         """
         Convert expressions to IR.
         """
         
+        self.verbosity = verbosity
+        self.stats = {}
+        print self.verbosity
+
         # Parse assembly and store in flat.
         self.flat = []
         for line in lines:
@@ -95,25 +100,46 @@ class Optimiser(object):
         return [str(expr)+'\n' for expr in self.flat]
 
 
+
+
 def main():
     """ Parse command line args, init. optimiser and run optimisations. """
+
 
     usage = "usage: %prog [options] file"
     parser = OptionParser(usage)
     parser.add_option("-d", "--dest", dest="filename",
                       help="save result in FILENAME")
-    parser.add_option("-v", "--verbose",
-                      action="store_true", dest="verbose")
-    parser.add_option("-q", "--quiet",
-                      action="store_false", dest="verbose")
+    parser.add_option("-v", "--verbosity", dest="verbosity",
+                      help="set verbosity")
 
     (options, args) = parser.parse_args()
     if len(args) != 1:
-        parser.error("incorrect number of arguments")
+        parser.error('incorrect number of arguments')
 
+    if not options.verbosity:
+        options.verbosity = 2
+
+    logging_levels = {0: logging.CRITICAL,
+                      1: logging.ERROR,
+                      2: logging.WARNING,
+                      3: logging.INFO,
+                      4: logging.DEBUG}
     
-    sourcefile = open(args[0], 'r')
-    opt = Optimiser(sourcefile.readlines())
+    logging.basicConfig(format='%(asctime)s %(levelname)-7s %(name)-14s %(message)s',
+                        level=logging_levels[int(options.verbosity)],
+                        filename='log',
+                        filemode='w'
+                        )
+
+    logger = logging.getLogger('main')
+    logger.info('opening sourcefile')
+    try:
+        sourcefile = open(args[0], 'r')
+    except IOError:
+        print('error: file not found: %s' % args[0])
+        exit(1)
+    opt = Optimiser(sourcefile.readlines(), options.verbosity)
     sourcefile.close()
     
     opt.optimise()
