@@ -1,7 +1,7 @@
 """ 
 File:         block_optimise.py
 Course:       Compilerbouw 2011
-Author:       Joris Stork
+Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
 
 The block optimiser module
 
@@ -12,10 +12,12 @@ Description:
 
 
 from cfg import BasicBlock
+import ir
 from ir import Instr
 import math
 from peephole import Peephole, Peeper
-from uic import copy_prop_targets
+from uic import copy_prop_targets, copy_prop_unsafe
+import logging
 
 class BlockOptimiser(object):
     """ Parent class for the various block optimisations.  """
@@ -24,7 +26,6 @@ class BlockOptimiser(object):
     def __init__(self, block = None, peephole_size = None):
         """ By default the peephole size is that of the basic block """
 
-        self.verbosity = 0
         self.block = block
         if not peephole_size:
             self.p_size = len(block)
@@ -54,13 +55,15 @@ class BlockOptimiser(object):
         compiles a dict of (register,constant) pairs, with the constant
         corresponding to the last value in the given register before the
         ``before'' register 
+        we can improve this function by keeping track of constants, e.g. after
+        moves.
         
         """
         consts = {}
         for ins in self.peephole[0:before]:
             if isinstance(ins,Instr):
                 if ins.instr == 'li':
-                    consts[ins.args[0]] = ins.args[1]
+                    consts[ins.args[0].expr] = ins.args[1]
         return consts
 
 
@@ -97,28 +100,67 @@ class CommonSubexpressions(BlockOptimiser):
 
 
 class ConstantFold(BlockOptimiser):
-    """ replaces arithmetic expression with only constants, with value """
+    """ Replaces arithmetic expression with only constants, with value """
 
 
     def addu(self, i, ins, opt, consts):
         """ 
-        replaces addu instruction with value. Though not guaranteed to replicate
+        Replaces addu instruction with value. Though not guaranteed to replicate
         unsigned behaviour, should be ok for benchmarks (c.f. report)
+        Note: We take into account that addu's might include compile-time
+        immediate values, since we encountered that in the benchmark code. Addu
+        seems to incorporate addiu functionality since no addiu's were found in
+        the benchmark code.
         
         """    
         optimised = opt
         if ins.instr == 'addu':
-            if (ins.args[1] in consts) & (ins.args[2] in consts):
-                newins = Instr('li',[ins.args[0],consts[ins.args[1]]+consts[ins.args[2]]])
-                self.peephole[i] = newins
-                consts[newins.args[0]] = newins.args[1]
-                if self.verbosity == 2 : print 'did a constant fold\n'
+
+            arg1_is_reg = isinstance(ins.args[1],ir.Register)
+            arg2_is_reg = isinstance(ins.args[2],ir.Register)
+            none_reg = (not arg1_is_reg) & (not arg2_is_reg)
+            arg1_known_reg = False
+            arg2_known_reg = False
+            if arg1_is_reg:
+                arg1_known_reg = (ins.args[1].expr in consts)
+            if arg2_is_reg:
+                arg2_known_reg = (ins.args[2].expr in consts)
+            both_known_regs = arg1_known_reg & arg2_known_reg
+            c1 = None
+            c2 = None
+            optimised_this_time = True
+
+            if both_known_regs:
+                c1 = consts[ins.args[1].expr]
+                c2 = consts[ins.args[2].expr]
+            elif none_reg:
+                c1 = ins.args[1]
+                c2 = ins.args[2]
+            elif arg1_known_reg & (not arg2_is_reg):
+                c1 = consts[ins.args[1].expr]
+                c2 = ins.args[2]
+            elif arg2_known_reg & (not arg1_is_reg):
+                c1 = ins.args[1]
+                c2 = consts[ins.args[2].expr]
+            else:
+                optimised_this_time = False
+
+            if optimised_this_time:
+                if isinstance(c1,str):
+                    c1 = int(c1,0)
+                if isinstance(c2,str):
+                    c2 = int(c2,0)
+                fold = c1 + c2 
+                self.peephole[i] = Instr('li',[ins.args[0], hex(fold)])
+                consts[self.peephole[i].args[0].expr] = self.peephole[i].args[1]
                 optimised = True
+                self.logger.info('constant folded')
         return optimised
 
 
     def suboptimisation(self):
         """ if 2+ compile time constants, tries constant folding """
+        self.logger = logging.getLogger('ConstantFold')
         optimised = False
         for i, ins in enumerate(self.peephole):
             if isinstance(ins,Instr):
@@ -133,16 +175,22 @@ class AlgebraicTransformations(BlockOptimiser):
     """ contains various algebraic transformation optimisations  """
     # Need to look for values of variables
 
+
     def divd_to_sra(self, i, ins, opt, consts):
-        """ shift-right arithmetic is faster than division...  """
+        """ 
+        shift-right arithmetic is faster than division... 
+        Needs fixing: div.d only ever uses $fn (floating point) registers. li
+        instructions (used to find constants) only use $n registers. 
+       
+       """
         optimised = opt
         if ins.instr == 'div.d':
-            if (ins.args[1] in consts) & (ins.args[2] in consts):
-                n = math.log(consts[ins.args[2]], 2)
+            if (ins.args[1].expr in consts) & (ins.args[2].expr in consts):
+                n = math.log(consts[ins.args[2].expr], 2)
                 if n % 1 == 0:
-                    newins = Instr('sra', [ins.args[0], consts[ins.args[1]], n])
+                    newins = Instr('sra', [ins.args[0], consts[ins.args[1].expr], n])
                     self.peephole[i] = newins
-                    if self.verbosity == 2 : print 'changed a div to an sra'
+                    self.logger.info('algebraic transformed (div->sra)')
                     optimised = True
         return optimised
 
@@ -150,6 +198,7 @@ class AlgebraicTransformations(BlockOptimiser):
     def suboptimisation(self):
         """   """
         
+        self.logger = logging.getLogger('AlgebraicTransformations')
         optimised = False
         for i, ins in enumerate(self.peephole):
             if isinstance(ins,Instr):
@@ -167,40 +216,41 @@ class CopyPropagation(BlockOptimiser):
         """ if a move, substitutes subsequent uses of unaltered copy value """
         optimised = opt
         if ins.instr == 'move': 
-            if self.verbosity == 1 : print 'found a move\n'
-            safe = True
             orig = ins.args[1]
-            if self.verbosity == 1 : print 'orig: ',orig,'\n'
             copy = ins.args[0] # nb: move not explicity defined for simplescalar
-            if self.verbosity == 1 : print 'copy: ',copy,'\n'
             for i2, ins2 in enumerate(self.peephole[i+1:len(self.peephole)]):
-                valid_target = False
-                if ins2.instr in copy_prop_targets:
-                    valid_target = True
-                # ripe for refining: copy value might be used not written to
-                if self.verbosity == 1 : print 'looking for copy in: ',str(ins2),'\n'
-                if copy not in ins2.args:
+                if isinstance(ins2,Instr):
+                    args = []
+                    for arg in ins2.args:
+                        if isinstance(arg,str) | isinstance(arg,int) :
+                            args.append(arg)
+                        else:
+                            args.append(arg.expr)
+                if not isinstance(ins2, Instr):
                     continue
-                elif (copy in ins2.args[0]) & valid_target:
-                    if self.verbosity == 1 : print 'copy possibly assigned to\n'
-                    if safe & (ins2.args.count(copy) > 1):
-                        first = ins2.args.index(copy)
-                        second = ins2.args[first+1:len(ins2.args)].index(copy)
-                        second = second + first + 1
-                        ins2.args[second] = orig
+                elif str(ins2.instr) not in copy_prop_targets:
+                    unsafe = str(ins2.instr) in copy_prop_unsafe
+                    if unsafe & ((copy.expr in args) | (orig.expr in args)):
+                        return optimised
+                    else: continue
+                elif copy.expr in args:
+                    argsize = len(ins2.args)
+                    if copy.expr in args[1:argsize]:
+                        one = args[1:argsize].index(copy.expr) + 1
+                        self.logger.debug(' being replaced... '+str(self.peephole[i+1+i2]))
+                        ins2.args[one] = orig
+                        if args[1:argsize].count(copy.expr) == 2:
+                            two=args[one+1:argsize].index(copy.expr)+one+1
+                            ins2.args[two] = orig
                         self.peephole[i+1+i2] = ins2
-                        if self.verbosity == 2 : print 'copy propagation: substituted original reference for pointer.\n'
-                        if self.verbosity == 1 : print 'still a safe propagation target: substituted\n'
-                    safe = False
-                elif valid_target & safe:
-                    if self.verbosity == 1 : print 'safe propagation target: substituted\n'
-                    ins2.args[ins2.args.index(copy)] = orig
-                    self.peephole[i+1+i2] = ins2
-                    optimised = True
-                    if self.verbosity == 2 : print 'copy propagation: substituted original reference for pointer.\n'
+                        self.logger.debug('new instruction: '+str(self.peephole[i+1+i2]))
+                        optimised = True
+                        self.logger.info('copy propagated')
+
+                    if (copy.expr==args[0]) | (orig.expr in args[0]):
+                        return optimised
                 else:
-                    if self.verbosity == 1 : print 'unknown situation: assume danger\n'
-                    safe = False
+                    continue
         return optimised
                             
 
@@ -211,6 +261,7 @@ class CopyPropagation(BlockOptimiser):
         
         """
 
+        self.logger = logging.getLogger('CopyPropagation')
         optimised = False
         for i, ins in enumerate(self.peephole):
             if isinstance(ins,Instr):

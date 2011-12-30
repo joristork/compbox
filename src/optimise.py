@@ -5,12 +5,12 @@
 #
 
 from optparse import OptionParser
+import logging
 
 from asmyacc import parser
 from ir import Raw
 from cfg import CFG
-from block_optimise import AlgebraicTransformations as AT
-from block_optimise import ConstantFold as CF
+import block_optimise as b_opt
 
 
 
@@ -42,11 +42,16 @@ class Optimiser(object):
      
     """
     
-    def __init__(self, lines):
+    def __init__(self, lines, verbosity = 0):
         """
         Convert expressions to IR.
         """
         
+        self.verbosity = verbosity
+        self.stats = {}
+        self.logger = logging.getLogger('Optimiser')
+
+        self.logger.info('parsing assembly')
         # Parse assembly and store in flat.
         self.flat = []
         for line in lines:
@@ -71,18 +76,25 @@ class Optimiser(object):
         
         """
 
+        self.logger.info('splitting flat in frames')
         frames = split_frames(self.flat)
+        self.logger.info('creating graph for each frame')
         graphs = [CFG(frame) for frame in frames]
 
         # work in progress: optimise graphs (block level)
+        self.logger.info('optimising')
         for graph in graphs:
             for block in graph.blocks:
-                optimiser = AT(block)
-                optimiser.optimise()
-                cf_optimiser = CF(block)
-                cf_optimiser.optimise()
+                ag_opt = b_opt.AlgebraicTransformations(block)
+                ag_opt.optimise()
+                cf_opt = b_opt.ConstantFold(block)
+                cf_opt.optimise()
+                cp_opt = b_opt.CopyPropagation(block)
+                cp_opt.optimise()
 
+        self.logger.info('joining graphs to frames')
         frames = [graph.cfg_to_flat() for graph in graphs]
+        self.logger.info('joining frames to flat')
         self.flat = sum(frames, [])
 
     
@@ -90,31 +102,60 @@ class Optimiser(object):
         """
         Return optimised assembly.
         """
-        
+       
+        self.logger.info('generating assembly')
         return [str(expr)+'\n' for expr in self.flat]
+
+
 
 
 def main():
     """ Parse command line args, init. optimiser and run optimisations. """
 
+
     usage = "usage: %prog [options] file"
     parser = OptionParser(usage)
     parser.add_option("-d", "--dest", dest="filename",
                       help="save result in FILENAME")
-    parser.add_option("-v", "--verbose",
-                      action="store_true", dest="verbose")
-    parser.add_option("-q", "--quiet",
-                      action="store_false", dest="verbose")
+    parser.add_option("-v", "--verbosity", dest="verbosity",
+            help="set verbosity (0: critical, 1: error, 2: warning, 3: info, 4: debug)")
 
     (options, args) = parser.parse_args()
     if len(args) != 1:
-        parser.error("incorrect number of arguments")
+        parser.error('incorrect number of arguments')
 
+    if not options.verbosity:
+        options.verbosity = 2
+
+    logging_levels = {0: logging.CRITICAL,
+                      1: logging.ERROR,
+                      2: logging.WARNING,
+                      3: logging.INFO,
+                      4: logging.DEBUG}
     
-    sourcefile = open(args[0], 'r')
-    opt = Optimiser(sourcefile.readlines())
+    logging.basicConfig(format='%(asctime)s %(levelname)-7s %(name)-14s %(message)s',
+                        level=4,
+                        filename='log',
+                        filemode='w'
+                        )
+    console = logging.StreamHandler()
+    console.setLevel(logging_levels[int(options.verbosity)])
+    formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-7s %(name)-14s %(message)s')
+    console.setFormatter(formatter)
+    logging.getLogger('').addHandler(console)
+
+
+    logger = logging.getLogger('main')
+    logger.info('opening sourcefile')
+    try:
+        sourcefile = open(args[0], 'r')
+    except IOError:
+        print('error: file not found: %s' % args[0])
+        exit(1)
+    opt = Optimiser(sourcefile.readlines(), options.verbosity)
     sourcefile.close()
-    
+    logger.info('sourcefile closed')
+
     opt.optimise()
 
     if options.filename:
@@ -123,6 +164,7 @@ def main():
         target_filename = args[0] + '.opt'
 
     targetfile = open(target_filename, 'w')
+    logging.info('writing optimised assembly to file')
     targetfile.writelines(opt.result())
     targetfile.close()
 
