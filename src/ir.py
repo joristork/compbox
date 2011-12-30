@@ -4,7 +4,7 @@
 # Reg $31 is a return register
 control_instructions = [
     'j',     #- jump.                                                           Used: j {label}. Needs: [], Gen: [] 
-    'jal',   #- jump and link.                                                  Used: jal {function}. Needs: [$31], Gen: [$31] 
+    'jal',   #- jump and link.                                                  Used: jal {function}. Needs: [], Gen: [$31] 
     'jr',    #- jump register.                                                  Used: jr $x. Needs: [$x], Gen: [] 
     'jalr',  #- jump and link register.                                         Not used
     'beq',   #- branch == 0.                                                    Used: beq $a $b {label}. Needs: [$a,$b], Gen: [] 

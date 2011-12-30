@@ -16,8 +16,9 @@ def main():
         flat.append(parser.parse(line))
     c = CFG(flat)
     for inst in flat:
-        if type(inst)==Register:
-            print inst
+        if type(inst)==Instr:
+            print inst.instr
+            print inst.args
 
     
     return c
