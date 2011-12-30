@@ -49,8 +49,9 @@ class Optimiser(object):
         
         self.verbosity = verbosity
         self.stats = {}
-        print self.verbosity
+        self.logger = logging.getLogger('Optimiser')
 
+        self.logger.info('parsing assembly')
         # Parse assembly and store in flat.
         self.flat = []
         for line in lines:
@@ -75,10 +76,13 @@ class Optimiser(object):
         
         """
 
+        self.logger.info('splitting flat in frames')
         frames = split_frames(self.flat)
+        self.logger.info('creating graph for each frame')
         graphs = [CFG(frame) for frame in frames]
 
         # work in progress: optimise graphs (block level)
+        self.logger.info('optimising')
         for graph in graphs:
             for block in graph.blocks:
                 ag_opt = b_opt.AlgebraicTransformations(block)
@@ -88,7 +92,9 @@ class Optimiser(object):
                 cp_opt = b_opt.CopyPropagation(block)
                 cp_opt.optimise()
 
+        self.logger.info('joining graphs to frames')
         frames = [graph.cfg_to_flat() for graph in graphs]
+        self.logger.info('joining frames to flat')
         self.flat = sum(frames, [])
 
     
@@ -96,7 +102,8 @@ class Optimiser(object):
         """
         Return optimised assembly.
         """
-        
+       
+        self.logger.info('generating assembly')
         return [str(expr)+'\n' for expr in self.flat]
 
 
@@ -127,10 +134,16 @@ def main():
                       4: logging.DEBUG}
     
     logging.basicConfig(format='%(asctime)s %(levelname)-7s %(name)-14s %(message)s',
-                        level=logging_levels[int(options.verbosity)],
+                        level=4,
                         filename='log',
                         filemode='w'
                         )
+    console = logging.StreamHandler()
+    console.setLevel(logging_levels[int(options.verbosity)])
+    formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-7s %(name)-14s %(message)s')
+    console.setFormatter(formatter)
+    logging.getLogger('').addHandler(console)
+
 
     logger = logging.getLogger('main')
     logger.info('opening sourcefile')
@@ -141,7 +154,8 @@ def main():
         exit(1)
     opt = Optimiser(sourcefile.readlines(), options.verbosity)
     sourcefile.close()
-    
+    logger.info('sourcefile closed')
+
     opt.optimise()
 
     if options.filename:
@@ -150,6 +164,7 @@ def main():
         target_filename = args[0] + '.opt'
 
     targetfile = open(target_filename, 'w')
+    logging.info('writing optimised assembly to file')
     targetfile.writelines(opt.result())
     targetfile.close()
 
