@@ -164,9 +164,15 @@ class Expr(object):
 
 class Instr(Expr):
     obtype = 'instr'
+    
     def __init__(self, instr, args):
         self.instr = instr
         self.args = args
+        self.gen = []
+        self.need = []
+        self.c = None
+        self.label = None
+        self.ival = None
 
     def jump_dest(self):
         if self.instr in control_instructions:
