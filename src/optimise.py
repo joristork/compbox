@@ -7,6 +7,10 @@
 from optparse import OptionParser
 import logging
 
+import parse_instr
+import optimise_tree
+import flat as flat_opt
+
 from asmyacc import parser
 from ir import Raw
 from cfg import CFG
@@ -59,6 +63,7 @@ class Optimiser(object):
                 # We skip empty lines. We could also tell yacc to put them in a Raw.
                 continue
             self.flat.append(parser.parse(line))
+        self.flat = parse_instr.parse(self.flat)
 
 
     def optimise(self):
@@ -76,13 +81,30 @@ class Optimiser(object):
         
         """
 
+        self.logger.info('optimising global control flow graph')
+        
+        cfg = CFG(self.flat)
+        if self.verbosity > 2:
+            cfg.cfg_to_diagram("allinstr_graph_before.png")    
+        optimise_tree.optimise(cfg)
+        if self.verbosity > 2:
+            cfg.cfg_to_diagram("allinstr_graph_after.png")      
+        self.flat = cfg.cfg_to_flat()
+        
+        self.logger.info('optimising flat (jumps and branches)')
+        self.flat = flat_opt.optimise(self.flat)
+        
+        
+         
+
+
         self.logger.info('splitting flat in frames')
         frames = split_frames(self.flat)
         self.logger.info('creating graph for each frame')
-        graphs = [CFG(frame) for frame in frames]
-
+        graphs = [CFG(frame) for frame in frames]  
+        
         # work in progress: optimise graphs (block level)
-        self.logger.info('optimising')
+        self.logger.info('optimising blocks')    
         for graph in graphs:
             for block in graph.blocks:
                 ag_opt = b_opt.AlgebraicTransformations(block)

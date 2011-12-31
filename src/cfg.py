@@ -20,6 +20,10 @@ class BasicBlock(object):
     """
 
     def __init__(self, instr = None, name = None):
+        self.genset = []
+        self.killset = []
+        self.inset = []
+        self.outset = []
         if not instr:
             self.instructions = []
         else:

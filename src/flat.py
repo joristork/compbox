@@ -17,7 +17,7 @@ def optimize_jump(instruction_list):
     First we need to scan the list for jump_not_label. After this has
     been done, we can start on label_label and label_jump imporvements.
     """
-    instruction_list = remove_comments(instruction_list)
+    #instruction_list = remove_comments(instruction_list)
     clean = False
     while(not clean):
         clean = True    
@@ -164,7 +164,7 @@ def brench_jump(il):
     return il
                 
     
-def optimize(instruction_list):
+def optimise(instruction_list):
     """
     This functions calls a number of flat optimalization routines and
     returns the improved list.
@@ -186,7 +186,7 @@ if __name__ == '__main__':
            if not line.strip(): continue
            instruction_list.append(parser.parse(line))
 
-        instruction_list = optimize(instruction_list)
+        instruction_list = optimise(instruction_list)
         for ins in instruction_list:
             if type(ins) == Label:
                 print ins

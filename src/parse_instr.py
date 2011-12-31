@@ -3,6 +3,17 @@ import re
 numreg = re.compile("^(\$[a-z]?)([0-9]+)$")
 Creg = re.compile("^([0-9]+)\((\$[A-Za-z0-9]+)\)$")
 
+def parse(flat):
+    for ex in flat:
+        if type(ex) == Instr:
+            i = Instruction(ex)
+            ex.gen = i.gen
+            ex.need = i.need
+            ex.c = i.c
+            ex.label = i.label
+            ex.ival = i.ival
+    return flat
+
 class Instruction(object):
 
     def __init__(self,ins):

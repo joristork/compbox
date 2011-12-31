@@ -1,7 +1,8 @@
 import cfg
 from ir import *
 
-def optimise_tree(graph):
+
+def optimise(graph):
     """
     Runs various optimisation schemes on the cfg
     """
@@ -48,8 +49,7 @@ def flatten(graph):
                     een = graph.get_block(te[0][0])
                     twee = graph.blocks[i + 1]
                     td = graph.get_out_edges(twee)
-                    
-                    print "Join blocks: ", een.name, "+", twee.name, "->", een.name
+
                     een.instructions = een.instructions + twee.instructions
                     for (fr, to) in td:
                         graph.edges.append((een.name, to))
@@ -64,7 +64,7 @@ def flatten(graph):
 def main():
     c = cfg.main()
     c.cfg_to_diagram("cfg_org.png")
-    c = optimise_tree(c)
+    c = optimise(c)
     c.cfg_to_diagram("cfg_new.png")
     return c
 if __name__ == '__main__':
