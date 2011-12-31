@@ -30,6 +30,7 @@ class BlockOptimiser(object):
         """ By default the peephole size is that of the basic block """
 
         self.block = block
+        self.stats = {'dc':0,'cp':0,'cf':0}
         if not peephole_size:
             self.p_size = len(block)
         else:
@@ -79,10 +80,10 @@ class BlockOptimiser(object):
     def optimise(self):
         """ If block assigned, runs sub-optimisation until exhausted. """
 
-        no_change = True
+        changed = False
         if not self.block: 
             """ raise an exception here """
-            return no_change
+            return changed
         peeper = Peeper(self.block, self.p_size)
         optimised = False
         for peephole in peeper:
@@ -90,8 +91,8 @@ class BlockOptimiser(object):
             optimised = True
             while optimised:
                 optimised = self.suboptimisation()
-                no_change = no_change & (not optimised)
-        return no_change
+                changed = changed | optimised
+        return changed
 
 
 
@@ -147,10 +148,13 @@ class ConstantFold(BlockOptimiser):
                 if isinstance(c2,str):
                     c2 = int(c2,0)
                 fold = c1 + c2 
+                self.logger.debug(' being replaced... '+str(self.peephole[i]))
                 self.peephole[i] = Instr('li',[ins.args[0], hex(fold)])
+                self.logger.debug('new instruction: '+str(self.peephole[i]))
                 consts[self.peephole[i].args[0].expr] = self.peephole[i].args[1]
                 optimised = True
-                self.logger.info('constant folded')
+                self.logger.debug('constant folded')
+                self.stats['cf'] += 1
         return optimised
 
 
@@ -203,7 +207,8 @@ class CopyPropagation(BlockOptimiser):
                         self.peephole[i+1+i2] = ins2
                         self.logger.debug('new instruction: '+str(self.peephole[i+1+i2]))
                         optimised = True
-                        self.logger.info('copy propagated')
+                        self.logger.debug('copy propagated')
+                        self.stats['cp'] += 1
 
                     if (copy.expr==args[0]) | (orig.expr in args[0]):
                         return optimised
@@ -268,9 +273,11 @@ class DeadCode(BlockOptimiser):
                 if candidate_reg.expr in pre_args+post_args:
                     return optimised
                 else: 
+                    self.logger.debug(' being removed... '+str(self.peephole[i]))
                     del self.peephole[i]
                     optimised = True
-                    self.logger.info('instruction removed')
+                    self.logger.debug('instruction removed')
+                    self.stats['dc'] += 1
                     return optimised
             else: return optimised
         return optimised

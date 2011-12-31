@@ -52,7 +52,7 @@ class Optimiser(object):
         """
         
         self.verbosity = verbosity
-        self.stats = {}
+        self.stats = {'cp':0,'cf':0,'dc':0}
         self.logger = logging.getLogger('Optimiser')
 
         self.logger.info('parsing assembly')
@@ -117,7 +117,7 @@ class Optimiser(object):
                 dc_opt = b_opt.DeadCode(block)
 
                 done = False
-                no_subopt_changes = True
+                subopt_changes = False
                 i = 0
 
                 while (not done):
@@ -125,15 +125,22 @@ class Optimiser(object):
                     i += 1
                     self.logger.debug('pass '+str(i))
 
-                    no_subopt_changes = cf_opt.optimise()
-                    done = done & no_subopt_changes
+                    subopt_changes = cf_opt.optimise()
+                    if subopt_changes:self.stats['cf'] += cf_opt.stats['cf']
+                    done = done & (not subopt_changes)
 
-                    no_subopt_changes = cp_opt.optimise()
-                    done = done & no_subopt_changes
+                    subopt_changes = cp_opt.optimise()
+                    if subopt_changes:self.stats['cp'] += cp_opt.stats['cp']
+                    done = done & (not subopt_changes)
                     
-                    no_subopt_changes = dc_opt.optimise()
-                    done = done & no_subopt_changes
+                    subopt_changes = dc_opt.optimise()
+                    if subopt_changes:self.stats['dc'] += dc_opt.stats['dc']
+                    done = done & (not subopt_changes)
 
+        self.logger.info('peephole optimisations done:')
+        self.logger.info('\t\tconstant folds: %d' % (self.stats['cf']))
+        self.logger.info('\t\tcopy propagations: %d' % (self.stats['cp']))
+        self.logger.info('\t\tdead code removals: %d' % (self.stats['dc']))
         self.logger.info('joining graphs to frames')
         frames = [graph.cfg_to_flat() for graph in graphs]
         self.logger.info('joining frames to flat')
