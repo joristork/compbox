@@ -59,9 +59,9 @@ class BasicBlock(object):
         return str(self.instructions)
 
     def print_block(self):
-            print "\nBlockname: ", self.name
-            for ins in self.instructions:
-                print ins        
+        print "\nBlockname: ", self.name
+        for ins in self.instructions:
+            print ins        
     
 
 
