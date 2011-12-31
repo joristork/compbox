@@ -36,7 +36,14 @@ def optimize_jump(instruction_list):
             clean = label_jump(instruction, i, instruction_list)
             if not clean:
                 break
-            
+                
+    clean = False
+    while(not clean):
+        clean = True    
+        for i,instruction in enumerate(instruction_list):
+            clean = cvt(instruction, i, instruction_list)
+            if not clean:
+                break            
     
     return instruction_list
 
@@ -56,8 +63,9 @@ def cvt(ins, i, il):
     """
     clean = True
     if i + 1 < len(il) -1 and \
-    type(ins) == Instr and type(il[i+1])== Instr and 'cvt' in ins.instr and 'cvt' in il[i+1]: 
-        if ins.args[0] == il[i + 1].args[1]:
+    type(ins) == Instr and type(il[i+1])== Instr and 'cvt' in ins.instr and 'cvt' in il[i+1].instr: 
+        if ins.args[0].expr == il[i + 1].args[1].expr:
+            
             l = re.compile("^cvt\.([a-z])\.([a-z])$")
             van = re.match(l,ins.instr).group(2)
             naar = re.match(l,ins.instr).group(1)
