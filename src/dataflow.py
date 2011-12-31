@@ -5,8 +5,10 @@ import parse_instr
 class Dataflow(object):
     def __init__(self, graph):
         self.graph = graph
+        self.iterations = 0
         self.set_ins_names()
         self.create_sets()
+        
     
     def set_ins_names(self):
         """
@@ -24,6 +26,7 @@ class Dataflow(object):
         """
         self.create_gen()    
         self.create_kill()
+        self.create_inout()
         
     def create_gen(self):
         """
@@ -66,8 +69,9 @@ class Dataflow(object):
                     #For all instruction in the target block
                     for ins in target.instructions:
                         if type(ins)==Instr:
-                            #Check if they write to the same registers as a 
-                            #instruction in the origional block
+                            #Check if they write to the same
+                            #registers as a instruction in the
+                            #origional block
                             for g in ins.gen:
                                 kills += self.check_regs(block.genset, g)
                                 kills += self.check_regs(block.killown, g)
@@ -83,9 +87,51 @@ class Dataflow(object):
                             elif kill in block.killset:
                                 target.killset[kill] = block.killown[kill]
     def create_inout(self):
-        pass
+        """
+        Determines the in and out sets for blocks using the Iterative algorithm 
+        for reaching definitions.
+        """
+        for block in self.graph.blocks:
+            for key in block.genset:
+                block.outset[key] = block.genset[key]
+        
+        change = True
+        while change:
+            self.iterations += 1
+            change = False
+            for i,block in enumerate(self.graph.blocks):
+            
+                #Set inset
+                oldin = block.inset
+                block.inset = {}
+                pred = self.graph.get_in_edges(block)
+                for pre in pred:
+                    p = self.graph.get_block(pre[0])
+                    
+                    for key in p.outset:
+                        block.inset[key] = p.outset[key]
+                #Set outset
+                oldout = block.outset
+                block.outset =  block.genset
+                for key in block.inset:
+                    if key not in block.killset:
+                        block.outset[key] = block.inset[key]
+                #test for change
+                #if i == 19:
+                #    self.graph.blocks[i].print_block()
+                #    print oldout, "\n"
+                #    print block.outset, "\n"
+                #    print oldin, "\n"
+                #    print block.inset, "\n"
+                #    print block.killset
+                if oldout != block.outset or block.inset != oldin:
+                    change = True
     
     def print_sets(self):
+        """
+        If all sets are determined, they can be printed in a overview for 
+        analysis by hand.
+        """
         for block in self.graph.blocks:
             print "------------------------------------------------------------"
             block.print_block()
@@ -103,7 +149,8 @@ class Dataflow(object):
                 print str(i) + ": " + str(block.inset[i])   
             print "\nOutset:"
             for i in block.outset:
-                print str(i) + ": " + str(block.outset[i])                                        
+                print str(i) + ": " + str(block.outset[i])     
+        print "Iterations: ", self.iterations                                  
 
 
     def remove_duplicates(self, l):
@@ -130,14 +177,11 @@ class Dataflow(object):
         for key in dic: 
             for dicreg in dic[key]:
                 if type(dicreg) == Register:
-                    #print reg, dicreg.expr, reg==dicreg.expr
                     if reg == dicreg.expr:
                         kill.append(key)
                 elif type(dicreg) == str:
-                    #print reg, dicreg
                     if reg == dicreg:
-                        kill.append(key)    
-        #print kill            
+                        kill.append(key)            
         return kill
         
     def get_reach(self,block):
@@ -169,14 +213,14 @@ def main():
     from asmyacc import parser
 
     flat = []
-    for line in open('../benchmarks/pi.s', 'r').readlines():
+    for line in open('../benchmarks/slalom.s', 'r').readlines():
         if not line.strip(): continue
         flat.append(parser.parse(line))
     flat = parse_instr.parse(flat)
     c = CFG(flat)
     d = Dataflow(c)
     d.print_sets()
-    d.get_reach(c.get_block("$L7"))
+    #d.get_reach(c.get_block("$L7"))
     
     
     return c

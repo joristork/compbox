@@ -1,0 +1,57 @@
+For instruction parsing we use Python Lex-Yacc (PLY), an implementation of Lex and Yacc for Python. The Lex part of PLY splits the source in \emph{tokens}, e.g. a \verb!COMMENT!, or a comma. These tokens are passed to Yacc, which finds hierarchical structure in them. When Yacc recognizes a certain pattern, a corresponding action is taken.
+
+\subsection{Lex}
+
+Our lexer splits the source in six tokens: \verb!COMMENT! for comments, \verb!RAW! for compiler directives (lines starting with a dot), \verb!HEX! for hexadecimal values, \verb!INT! for integer values (unsigned), \verb!ID! for label names and instruction names, and \verb!REGISTER! for register identifiers (\verb!$1!, \verb!$2!, etc.)
+The following regular expressions specify the tokens.
+\begin{quote}
+\begin{verbatim}
+COMMENT  : #.*
+RAW      : \..+
+HEX      : 0x[0-9a-f]+
+INT      : [0-9]+
+ID       : ($L){0,1}[_a-zA-Z0-9][_a-zA-Z0-9\.]*
+REGISTER : $[a-z0-9]+
+\end{verbatim}
+\end{quote}
+In addition, we consider the characters `\verb!,!', `\verb!(!', `\verb!)!', `\verb!:!', `\verb!.!', `\verb!+!', and `\verb!-!' as individual tokens, called \emph{literals}.
+
+\subsection{Yacc}
+We specified the structure of the assembly language according to the following grammar rules.
+
+\begin{grammar}
+<expr> := <raw>
+\alt <label>
+\alt <comment>
+\alt <instr>
+\alt <instr> <comment>
+
+<raw> := \verb!RAW!
+
+<label> := \verb!ID! `:'
+
+<comment> := \verb!COMMENT!
+
+<instr> := \verb!ID!
+\alt \verb!ID! <arg>
+\alt \verb!ID! <arg> `,' <arg>
+\alt \verb!ID! <arg> `,' <arg> `,' <arg>
+
+<arg> := <int>
+\alt <hex>
+\alt <register>
+\alt \verb!ID!
+\alt \verb!ID! `+' <arg>
+\alt \verb!ID! `-' <arg>
+\alt <int> `(' <register> `)'
+\alt \verb!ID!  `(' <register> `)'
+
+<int> := \verb!INT!
+\alt `-' \verb!INT!
+
+<hex> := \verb!HEX!
+
+<register> := \verb!REGISTER!
+\end{grammar}
+
+Each expression is stored in a Python object of type \verb!Raw!, \verb!Label!, \verb!Comment!, \verb!Instr! or \verb!Register!.
