@@ -40,26 +40,45 @@ class Dataflow(object):
         for block in self.graph.blocks:
             self.get_reach(block)
         
+        #For each blokc in the graph
         for block in self.graph.blocks:
+            #Check all nodes that can be reached
             for targetname in block.reach:
                 target = self.graph.get_block(targetname)
                 kills = []
                 
+                #For all instruction in the target block
+                for ins in target.instructions:
+                    #Check if they write to the same registers as a instruction
+                    #in the origional block
+                    for g in ins.gen:
+                        kills += check_regs(block.genset, g)
+                        kills += check_regs(block.killown, g)
+                #Remove any duplicates in the list
+                #kills = remove_duplicates(kills)
                 
+                #For all instructions that are overwritten (killed) in the 
+                #origional block, find the corresponding registers and add the 
+                #killed instruction to the killset of the target block.
+                for kill in kills:
+                    if kill not in target.killset:
+                        if kill in block.genset:
+                            target.killset[kill] = block.genset[kill]
+                        elif kill in block.killset:
+                            target.killset[kill] = block.killown[kill]
                 #for g in target.gen: 
                 #    for reg in target.gen[g]:
                 #        kills = check_regs(block.gen, reg)
                 #for g in target.killown: 
                 #    for reg in target.killown[g]:
-                #        kills += check_regs(block.gen, reg)  
-                                          
-                kills = self.remove_duplicates(kills)
-                for kill in kills:
-                    if kill not in target.killset:
-                        if kill in block.gen:
-                            target.killset[key] = block.gen[key]
-                        elif kill in block.killown:
-                            target.killset[key] = block.gen[key]                            
+                #        kills += check_regs(block.gen, reg)                           
+                #kills = self.remove_duplicates(kills)
+                #for kill in kills:
+                #    if kill not in target.killset:
+                #        if kill in block.gen:
+                #            target.killset[key] = block.gen[key]
+                #        elif kill in block.killown:
+                #            target.killset[key] = block.gen[key]                            
                             
 
     def remove_duplicates(self, l):
