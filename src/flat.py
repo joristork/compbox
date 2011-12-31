@@ -3,6 +3,7 @@
 from asmyacc import parser
 import sys
 from ir import *
+import re
 
 #test with: optimize([Instr("beq", ["2"]), Label("1"),Label("2"),Instr("j",["3"]),Instr("beq", ["2"]),Instr("beq", ["2"]),Instr("beq", ["2"]),Instr("beq", ["2"]),Instr("beq", ["2"]),Label("3")])
 
@@ -35,16 +36,46 @@ def optimize_jump(instruction_list):
             clean = label_jump(instruction, i, instruction_list)
             if not clean:
                 break
-            
+                
+    clean = False
+    while(not clean):
+        clean = True    
+        for i,instruction in enumerate(instruction_list):
+            clean = cvt(instruction, i, instruction_list)
+            if not clean:
+                break            
     
     return instruction_list
 
 def remove_comments(il):
+    """
+    Not used
+    """
     new = []
     for ins in il:
         if type(ins) != Comment:
             new.append(ins)
     return new
+
+def cvt(ins, i, il):
+    """
+    Optimises redundant conversion.
+    """
+    clean = True
+    if i + 1 < len(il) -1 and \
+    type(ins) == Instr and type(il[i+1])== Instr and 'cvt' in ins.instr and 'cvt' in il[i+1].instr: 
+        if ins.args[0].expr == il[i + 1].args[1].expr:
+            
+            l = re.compile("^cvt\.([a-z])\.([a-z])$")
+            van = re.match(l,ins.instr).group(2)
+            naar = re.match(l,ins.instr).group(1)
+            new = Instr("cvt."+naar+"."+van,[ins.args[1],il[i+1].args[0]])
+            il[i + 1] = new
+            del il[i]
+            clean = False
+        
+    return clean
+        
 
 def jump_not_label(ins, i, il):
     """
