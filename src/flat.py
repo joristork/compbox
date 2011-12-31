@@ -153,7 +153,7 @@ def brench_jump(il):
             if type(ins) == Instr and ins.instr in negation \
                and i + 2 < len(il) - 1 and type(il[i+1]) == Instr \
                and type(il[i+2]) == Label and \
-               ins.jump_dest() == il[i+2].expr:
+               ins.jump_dest() == il[i+2].expr and il[i+1] == 'j':
                 il[i].instr = negation[il[i].instr]
                 il[i].args[-1] = il[i+1].jump_dest()
                 del il[i+1]

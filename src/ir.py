@@ -178,7 +178,7 @@ class Instr(Expr):
         if self.instr in control_instructions:
             return self.args[-1]
         else:
-            raise Exception('this is not a jump/branch')
+            raise Exception('this is not a jump/branch: ', self.instr)
 
     def __repr__(self):
         return '<Instr %r %r>' % (self.instr, self.args)
