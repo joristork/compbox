@@ -12,7 +12,7 @@
 %  Front page stuff
 %
 
-\title{A peephole optimizer for SimpleScalar DLX assembly code}
+\title{A peephole optimiser for SimpleScalar DLX assembly code}
 \author{J. Stork, L. Swartsenburg and J. Zuiddam}
 
 
@@ -22,19 +22,48 @@
 
 \begin{document}
 \maketitle
+
+
 \chapter{Introduction}
+\label{sec:introduction}
+\input{sections/introduction}
 
-\chapter{Design}
-
-\begin{figure}[h]
-\centering
-\includegraphics[viewport= 170 90 510 490, clip=true]{diagram}
-\caption{Optimiser design diagram.}
-\label{fig:diagram}
-\end{figure}
 
 \chapter{Implementation}
+
+\section{Design}
+\label{sec:design}
+\input{sections/design}
+
+\section{Instruction parsing}
+\label{sec:parsing}
+\input{sections/parsing}
+
+\section{Division of instructions into basic blocks}
+\label{sec:splitting}
+\input{sections/splitting}
+
+\section{Global branch optimisations}
+\label{sec:global}
+\input{sections/global}
+
+\section{Peephole optimisation on basic blocks}
+\label{sec:peephole}
+\input{sections/peephole}
+
+\section{Advanced peephole optimisations using dataflow and liveness analysis}
+\label{sec:advanced}
+\input{sections/advanced}
+
+
 \chapter{Benchmarks}
+\label{sec:benchmarks}
+\input{sections/benchmarks}
+
+
 \appendix
 \chapter{Source}
+\label{ch:source}
+\input{sections/source}
+
 \end{document}
