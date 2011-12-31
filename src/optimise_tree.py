@@ -18,13 +18,12 @@ def remove_notused(graph):
     """
     for (i, block) in enumerate(graph.blocks):
         if i != 0 and len(graph.get_in_edges(block)) == 0:
-            if (len(block.instructions) == 1 and
-                type(block.instructions[0]) == Raw
-                and ".end" in block.instructions[0].expr):
-                if not "End" in block.name:
-                    block.name = "End(" + block.name + ")"
-            else:
-                graph.remove_block(block.name)
+            for instr in block.instructions:
+                if type(instr) == Instr:
+                    block.instrucions.remove(instr)
+            if len(block.instructions) == 0:
+                graph.remove_block(block)
+            
                 
     return graph
 

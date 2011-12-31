@@ -40,6 +40,9 @@ def optimize_jump(instruction_list):
     return instruction_list
 
 def remove_comments(il):
+    """
+    Not used
+    """
     new = []
     for ins in il:
         if type(ins) != Comment:
