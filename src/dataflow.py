@@ -27,7 +27,7 @@ class Dataflow(object):
         
     def create_gen(self):
         """
-        Determines which instruction are in the gen set of each block
+        Determines which instructions are in the gen set of each block
         """
         for block in self.graph.blocks:
             # {"",[]}
@@ -50,7 +50,7 @@ class Dataflow(object):
             
     def create_kill(self):
         """
-        Determines which instruction are in the kill set of each block
+        Determines which instructions are in the kill set of each block
         """    
         for block in self.graph.blocks:
             self.get_reach(block)
