@@ -20,10 +20,14 @@ class BasicBlock(object):
     """
 
     def __init__(self, instr = None, name = None):
-        self.genset = []
-        self.killset = []
-        self.inset = []
-        self.outset = []
+        self.genset = {}
+        self.killset = {}
+        self.inset = {}
+        self.outset = {}
+        
+        self.killown = {}
+        self.reach = {}
+        
         if not instr:
             self.instructions = []
         else:
@@ -196,9 +200,10 @@ class CFG(object):
         if type(block) == str:
             block = self.get_block(block)
         
-        for edge in self.edges:
-            if (edge[0] == block.name):
-                _out.append(edge)
+        if block:
+            for edge in self.edges:
+                if (edge[0] == block.name):
+                    _out.append(edge)
         return _out
         
     def get_in_edges(self, block):
@@ -207,10 +212,11 @@ class CFG(object):
         """
         _in = []
         if type(block) == str:
-            block = self.get_block(block) 
-        for edge in self.edges:
-            if (edge[1] == block.name):
-                _in.append(edge)
+            block = self.get_block(block)
+        if block: 
+            for edge in self.edges:
+                if (edge[1] == block.name):
+                    _in.append(edge)
         return _in
     
     def get_blockname(self, block):
@@ -226,6 +232,7 @@ class CFG(object):
         for block in self.blocks:
             if block.name == name:
                 return block
+        return None
     
     def cfg_to_flat(self):
         """
