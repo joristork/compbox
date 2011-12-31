@@ -81,9 +81,13 @@ class Optimiser(object):
         self.logger.info('creating graph for each frame')
         graphs = [CFG(frame) for frame in frames]
 
-        for graph in graphs:
-            for block in graph.blocks:
+        for graphnr, graph in enumerate(graphs):
+            self.logger.info('graph %d of %d' % (graphnr + 1, len(graphs)))
 
+            for blocknr, block in enumerate(graph.blocks):
+            
+                self.logger.debug('block %d of %d' % (blocknr + 1, len(graph.blocks)))
+               
                 cf_opt = b_opt.ConstantFold(block)
                 cp_opt = b_opt.CopyPropagation(block)
                 dc_opt = b_opt.DeadCode(block)
@@ -95,7 +99,7 @@ class Optimiser(object):
                 while (not done):
                     done = True
                     i += 1
-                    self.logger.info('peephole optimising, pass '+str(i))
+                    self.logger.debug('pass '+str(i))
 
                     no_subopt_changes = cf_opt.optimise()
                     done = done & no_subopt_changes
