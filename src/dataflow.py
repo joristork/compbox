@@ -100,7 +100,10 @@ class Dataflow(object):
             self.iterations += 1
             change = False
             for i,block in enumerate(self.graph.blocks):
+            
+                #Set inset
                 oldin = block.inset
+                block.inset = {}
                 pred = self.graph.get_in_edges(block)
                 for pre in pred:
                     p = self.graph.get_block(pre[0])
@@ -210,14 +213,14 @@ def main():
     from asmyacc import parser
 
     flat = []
-    for line in open('../benchmarks/whet.s', 'r').readlines():
+    for line in open('../benchmarks/slalom.s', 'r').readlines():
         if not line.strip(): continue
         flat.append(parser.parse(line))
     flat = parse_instr.parse(flat)
     c = CFG(flat)
     d = Dataflow(c)
-    #d.print_sets()
-    d.get_reach(c.get_block("$L7"))
+    d.print_sets()
+    #d.get_reach(c.get_block("$L7"))
     
     
     return c
