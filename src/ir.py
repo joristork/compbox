@@ -166,6 +166,7 @@ class Instr(Expr):
     obtype = 'instr'
     
     def __init__(self, instr, args):
+        self.id = None
         self.instr = instr
         self.args = args
         self.gen = []
