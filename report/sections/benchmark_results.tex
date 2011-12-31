@@ -1,0 +1,22 @@
+\subsection{Test 1}
+
+Our first benchmark test. A number of the files had errors.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{l l l l l}
+\toprule
+        &original           &               &optimised          &             \\
+file    &cycles (change)    &lines (change) &cycles (change)    &lines(change)\\
+\midrule
+pi      &$12988$            &               &$9125$             &             \\
+acron   &$4435765$          &               &segfault($7370$)!  &             \\
+clinpack&$1546336$          &               &segfault($7406$)!  &             \\
+dhrys.  &$2887741$          &               &compile error!     &             \\
+whet    &$2864067$          &               &never ending!      &             \\
+slalom  &$27254$            &               &$27161$            &             \\
+\bottomrule
+\end{tabular}
+\caption{Results of test 1}
+\label{tab:test1}
+\end{table}
