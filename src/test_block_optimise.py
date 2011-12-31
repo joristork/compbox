@@ -17,24 +17,23 @@ class TestBlockOptimisers(unittest.TestCase):
         pass
 
 
-    def test_algebra(self):
-        dest1 = ir.Register('dest1')
-        dest2 = ir.Register('dest2')
-        divdest1 = ir.Register('divdest1')
-        instrs = [ir.Instr('li', [dest1, 1634563464])]
-        instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
-        instrs.append(ir.Instr('li', [dest2, 64]))
-        instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
-        instrs.append(ir.Instr('div.d', [divdest1,dest1,dest2]))
-        instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
-        block = cfg.BasicBlock(instrs)
-        bop = block_optimise.AlgebraicTransformations(block = block)
-        bop.optimise()
-        expected = str(ir.Instr('sra', [divdest1, 1634563464, 6.0]))
-        result = str(block[4])
-        #TODO: map assertion to list of (expected,result)
-        print 'algebra: ', result==expected
-        self.assertTrue(result == expected)
+#    def test_algebra(self):
+#        dest1 = ir.Register('dest1')
+#        dest2 = ir.Register('dest2')
+#        divdest1 = ir.Register('divdest1')
+#        instrs = [ir.Instr('li', [dest1, 1634563464])]
+#        instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
+#        instrs.append(ir.Instr('li', [dest2, 64]))
+#        instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
+#        instrs.append(ir.Instr('div.d', [divdest1,dest1,dest2]))
+#        instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
+#        block = cfg.BasicBlock(instrs)
+#        bop = block_optimise.AlgebraicTransformations(block = block)
+#        bop.optimise()
+#        expected = str(ir.Instr('sra', [divdest1, 1634563464, 6.0]))
+#        result = str(block[4])
+#        #TODO: map assertion to list of (expected,result)
+#        self.assertTrue(result == expected)
 
 
     def test_const_fold_addu(self):
@@ -84,6 +83,40 @@ class TestBlockOptimisers(unittest.TestCase):
         self.assertTrue(result1 == expected1)
         self.assertTrue(result2 == expected2)
         self.assertTrue(result3 == expected3)
+
+
+    def test_dead_code(self):
+        reg1 = ir.Register('$1')
+        reg2 = ir.Register('$2')
+        reg3 = ir.Register('$3')
+        reg4 = ir.Register('$4')
+        reg5 = ir.Register('$5')
+        instrs = [ir.Instr('filler', ['$filler',1634563464,64])]
+        instrs.append(ir.Instr('addu', [reg1,reg2,reg3]))
+        instrs.append(ir.Instr('filler2', ['dest',9999,64]))
+        instrs.append(ir.Instr('sll', [reg3, reg4, 10]))
+        instrs.append(ir.Instr('filler3', ['dest',9999,64]))
+        instrs.append(ir.Instr('lw', [reg3, '0(fp)']))
+        instrs.append(ir.Instr('filler4', ['dest',9999,64]))
+        instrs.append(ir.Instr('addu', [reg1,reg2,reg4]))
+        instrs.append(ir.Instr('filler5', ['dest',9999,64]))
+        instrs.append(ir.Instr('addu', [reg3,reg1,reg2]))
+        instrs.append(ir.Instr('filler6', ['dest',9999,64]))
+        instrs.append(ir.Instr('div', [reg1,reg2,reg4]))
+        block = cfg.BasicBlock(instrs)
+        bop = block_optimise.DeadCode(block = block)
+        bop.optimise()
+        exp_instrs = [ir.Instr('filler', ['$filler',1634563464,64])]
+        exp_instrs.append(ir.Instr('filler2', ['dest',9999,64]))
+        exp_instrs.append(ir.Instr('filler3', ['dest',9999,64]))
+        exp_instrs.append(ir.Instr('filler4', ['dest',9999,64]))
+        exp_instrs.append(ir.Instr('addu', [reg1,reg2,reg4]))
+        exp_instrs.append(ir.Instr('filler5', ['dest',9999,64]))
+        exp_instrs.append(ir.Instr('addu', [reg3,reg1,reg2]))
+        exp_instrs.append(ir.Instr('filler6', ['dest',9999,64]))
+        exp_instrs.append(ir.Instr('div', [reg1,reg2,reg4]))
+        for i in xrange(len(block)):
+            self.assertTrue(str(block[i]) == str(exp_instrs[i]))
 
 
 
