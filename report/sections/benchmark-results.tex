@@ -7,7 +7,7 @@ Our first benchmark test. A number of the files had errors.
 \begin{tabular}{l l l l l}
 \toprule
         &original           &               &optimised          &             \\
-file    &cycles (change)    &lines (change) &cycles (change)    &lines(change)\\
+file    &cycles     &lines  &cycles     &lines\\
 \midrule
 pi      &$12988$            &               &$9125$             &             \\
 acron   &$4435765$          &               &segfault($7370$)!  &             \\
@@ -19,4 +19,28 @@ slalom  &$27254$            &               &$27161$            &             \\
 \end{tabular}
 \caption{Results of test 1}
 \label{tab:test1}
+\end{table}
+
+
+\subsection{Test 2}
+
+Our second benchmark test. \texttt{dhrystone.s} failed to cross compile.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{l l l l l}
+\toprule
+        &original           &               &optimised          &             \\
+file    &cycles     &lines  &cycles     &lines\\
+\midrule
+pi      &$12988$            &               &$9125$             &             \\
+acron   &$4435765$          &               &$4332868$  &             \\
+clinpack&$1546336$          &               &$942222$  &             \\
+dhrys.  &$2887741$          &               &compile error!     &             \\
+whet    &$2864067$          &               &$2810428$      &             \\
+slalom  &$27254$            &               &$26950$            &             \\
+\bottomrule
+\end{tabular}
+\caption{Results of test 2}
+\label{tab:test2}
 \end{table}
