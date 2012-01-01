@@ -1,8 +1,9 @@
-We split the source code on two levels.
+As mentioned in section~\ref{sec:design} we split the source code on two levels.
 \begin{itemize}
-\item The code is split in functions. We call such a code block a \emph{frame}.
-\item Each frame is split in \emph{basic blocks}.
+\item The code is split in functions.
+\item Each function is split in \emph{basic blocks}.
 \end{itemize}
 
 The blocks of each frame are stored in a \emph{control flow graph} (cfg). The edges in this graph correspond to possible branches.
 
+Splitting in blocks is implemented in \code{cfg.py}.

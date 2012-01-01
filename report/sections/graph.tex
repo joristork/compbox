@@ -4,7 +4,7 @@ language=[mips]Assembler,         % the language of the code
 In the section \ref{sec:splitting} the code is divided in frames and after
 that in basic blocks. It is also possible to create a graph from the whole code.
 If this is done, it is possible to perform optimalisations on the graph. We 
-implemented two optimalisations in the module optimise\_tree.
+implemented two optimalisations in the module \code{optimise\_tree}.
 \subsubsection{Remove not used}
 A program has only one entry point: the beginning of the instruction list. The 
 first block should be the only block with no incoming edges. If there are more
