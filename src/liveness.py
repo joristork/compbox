@@ -4,8 +4,9 @@ import parse_instr
 from dataflow import Dataflow
 
 class Liveness(object):
-    def __init__(self, graph):
+    def __init__(self, graph, verbosity=2):
         self.graph = graph
+        self.verbosity = verbosity
         #self.dataflow = False
         #self.dataflow = dataflow_done()
         #if self.dataflow:
@@ -174,6 +175,10 @@ def main():
     c = CFG(flat)
     d = Dataflow(c)
     l = Liveness(c)
+    change = True
+    while change:
+        l.analyse()
+        change = l.optimise()      
     l.print_live()
     #1d.print_sets()
     #d.get_reach(c.get_block("$L7"))

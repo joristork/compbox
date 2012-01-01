@@ -112,13 +112,13 @@ class Optimiser(object):
             self.logger.info('graph %d of %d' % (graphnr + 1, len(graphs)))
 
             Dataflow(graph)
-            l = Liveness(graph)
+            l = Liveness(graph,self.verbosity)
 
             #self.logger.info('Performing liveness optimalisation on graph')
             #change = True
             #while change:
             #    l.analyse()
-            #    change = l.optimise()     
+            #    change = l.optimise()   
                         
             for blocknr, block in enumerate(graph.blocks):
             

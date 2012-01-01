@@ -9,26 +9,40 @@ With a control flow graph (CFG) object we can create a dataflow object. When a
 dataflow object is created, first the gen set of each block is determined and 
 set in the basicblock. After this, the reach of each block has to be calculated
 (which other blocks can be reached using the directed edges of the graph). With 
-this information, we can generate the kill set for each block.
-
+this information, we can generate the kill set for each block.\\
+\\
 Now that we have the gen- and kill-set of each block, we can calculate the
-in and out sets using the reaching definitions algorithm.
-
-A overview of the sets and the number of iterations needed for the reaching 
+in and out sets using the reaching definitions algorithm.\\
+\\
+An overview of the sets and the number of iterations needed for the reaching 
 definitions algorithm can be printed by calling a print function on the dataflow
 object.
 \subsubsection{Liveness analysis}
-For all blocks the $\text{LIVE}_\text{in}$ and $\text{LIVE}_\text{out}$ sets are determined.
-The $\text{LIVE}_\text{in}$ set is determined by:
-\[
-\text{LIVE}_\text{in}[\text{block}] = \bigcup_{i \in \text{block}}(used\_regs[i]) - (registers\_set\_in\_block\_before[i]).
-\]
-The $\text{LIVE}_\text{out}$ set by:
-\begin{align*}
-\text{LIVE}_\text{out}[\text{block}]		&= \bigcup_{p \in succ[\text{block}]} \text{LIVE}_\text{in}[p],\\
-\text{LIVE}_\text{out}[\text{finalblock}]	&= \emptyset.
-\end{align*}
-If a \texttt{jal} or \texttt{jalr} instruction is encountered, it is not clear 
-anymore which registers are used in the function the jump points to. We will 
-have to assume the worst and set all registers minus the registers that
-are set before the jump as $\text{LIVE}_\text{in}$ set for that block.
+To optimise our assembly further, it is important to know which variables are
+alive at which point. That is: if a instruction writes to a register, the
+register is alive between the write and the last read (without writing in 
+between). Wikipedia: "a variable is live if it holds a value that may be needed 
+in the future". \\
+First, we start by determining the $live_{out}$ set of each block. These
+are the registers that are needed somewhere in the code after the block. It 
+is therefore crucial to examine all edges. \\
+The $live_{in} $ sets are all variables that are needed in the block or further
+along in the graph, but are not set before they are needed in the block.
+For each instruction in the block we determine which registers are needed. This 
+is done backwards. We can search in the block which instruction writes the last
+to these registers. This instruction is saved in a set called $kill$. The 
+analysis takes into account that some jump functions have a elaborate set of
+registers they need. This is the case for the \texttt{jal}, \texttt{jal} and 
+\texttt{j \$31} instructions. These instructions are function calls.
+In the case of a \texttt{j \$31} instruction,\\
+\$fp, \$sp, \$16-\$23, \$f20, \$f22, \$f24, \$f26, \$f28, \$f30, \$2, \$3, \$f0, \$f1, \$f2, \$f3 \\are alive. \\
+In the case of a \texttt{jal} or a \texttt{jalr} instruction,\\
+\$4-\$7 en \$f12-\$f15 \\
+are alive and \\
+\$31 \\
+is set.
+
+\subsubsection{Liveness optimalisation}
+A small optimalisation is done based on our liveness analysis. We examine each
+instruction that writes for liveness of the written register. If the register 
+is never used (in the graph), it can be removed.
