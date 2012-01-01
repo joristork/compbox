@@ -9,8 +9,13 @@ class Liveness(object):
         #self.dataflow = False
         #self.dataflow = dataflow_done()
         #if self.dataflow:
-        self.analyse()
-    
+        #change = True
+        #while change:
+        #    self.analyse()
+        #    change = self.optimise()
+        #    print change
+        #self.analyse()
+        
     def dataflow_done(self):
         result = False
         for block in self.graph.blocks:
@@ -138,6 +143,7 @@ class Liveness(object):
                 print i                       
                 
     def optimise(self):
+        change = False
         for block in self.graph.blocks:
             for ins in block.instructions:
                 if type(ins) == Instr and len(ins.gen) > 0 \
@@ -145,6 +151,8 @@ class Liveness(object):
                     and not (self.comp_regs(ins.gen, block.liveout)) \
                     and ins.instr not in ['jal','jalr']:
                     block.instructions.remove(ins)
+                    change = True
+        return change
                     
     def comp_regs(self,a,b):
         for reg in a:

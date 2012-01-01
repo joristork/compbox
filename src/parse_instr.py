@@ -82,8 +82,10 @@ class Instruction(object):
         elif ins.instr == 'jal':
             self.gen = [Register("$31"),Register("$2"),Register("$3")] #Return address and values
             #Reg $4,5,6,7 are registers that are used for fuction arguments.
+            # $f12, $f13, $f14, $f15 parameter registers zijn voor functies. 
+            # http://msdn.microsoft.com/en-us/library/ms253512%28v=vs.90%29.aspx            
             #it is not clear which one will be used.
-            self.need = [Register("$4"),Register("$5"),Register("$6"),Register("$7"),Register("$fp"), Register("$sp")]
+            self.need = [Register("$4"),Register("$5"),Register("$6"),Register("$7"),Register("$fp"), Register("$sp"),Register("$f12"),Register("$f13"),Register("$f14"),Register("$f15")]
         elif ins.instr == 'jr':
             if len(ins.args) == 1:
                 self.need = [ins.args[0]]
@@ -93,8 +95,10 @@ class Instruction(object):
         elif ins.instr == 'jalr':
             if len(ins.args) == 1:
                 #Reg $4,5,6,7 are registers that are used for fuction arguments.
+                # $f12, $f13, $f14, $f15 parameter registers zijn voor functies. 
+                # http://msdn.microsoft.com/en-us/library/ms253512%28v=vs.90%29.aspx
                 #it is not clear which one will be used.
-                self.need = [ins.args[0],Register("$4"),Register("$5"),Register("$6"),Register("$7"),Register("$fp"), Register("$sp")]
+                self.need = [ins.args[0],Register("$4"),Register("$5"),Register("$6"),Register("$7"),Register("$fp"), Register("$sp"),Register("$f12"),Register("$f13"),Register("$f14"),Register("$f15")]
                 self.gen = [Register("$2"),Register("$3")] #Return values
             else:
                 raise Exception("Invalid number of args for ins: ", ins.instr)
