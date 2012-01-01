@@ -50,12 +50,14 @@ The optimisations are explained in the implementation sections that follow.
 \subsubsection*{Scheduling}
 As there are multiple optimisations to apply and a single optimisation may be applied multiple times, we must decide how to schedule them. In this sections we will regard graph and block optimisations as functions on the set of control flow graphs and ir blocks, respectively.
 
-Let $f$ be an optimisation on blocks. It is possible that an application of $f$ on a block $B$ yields a block that in turn can be optimised. That is, applying $f$ on $f(B)$ will yield a different result than $f(B)$. Therefore, $f$ is applied to $B$ until the result is constant, i.e. $n$ times, with $$f^{(n)}(B) = f^{(n-1)}(B).$$ We denote the function that applies $f$ until the result is stable with $f^*$. Note that $f^{(k)}(B)$ for some $k$ need not necessarily be more efficient than $B$ to be useful, because other optimisations can take advantage of the changes made.
+Let $f$ be an optimisation on blocks. It is possible that an application of $f$ on a block $B$ yields a block that in turn can be optimised. That is, applying $f$ on $f(B)$ will yield a different result than $f(B)$. Therefore, $f$ is applied to $B$ until the result is constant, i.e. $n$ times, with $$f^{(n)}(B) = f^{(n-1)}(B).$$ We denote the function that applies $f$ until the result is stable by $f^*$. Note that $f^{(k)}(B)$ for some $k$ need not necessarily be more efficient than $B$ to be useful, because other optimisations can take advantage of the changes made. For example, copy propagation only pays off after dead code elimination.
 
 Let $f$ and $g$ be two different optimisations on blocks. We could apply $f^*$ to a block $B$ and then $g^*$. But, as $f^*$ and $g^*$ may be mutually beneficial, the composite application $g^* \circ f^*$ must be repeated until the result is constant.
 
 The same properties hold when $f$ and $g$ are graph level optimisations, \emph{mutatis mutandis}. We could even mix graph and block optimisations, where block optimisations are applied to all blocks in the graph concerned. Let $F_1, \ldots, F_m$ be such optimisations. Then, every optimisation must be repeated until constant, which we called $F_i^*$, and the composite optimisation must also be repeated until constant, giving $${(F_m^* \circ \cdots \circ F_1^*)}^*.$$ This is the general scheduling recipe.
 
-We did not consider the order of applying optimisations. A particular order could optimal. However, as the composite optimisation is repeated until the result is constant, the precise order probably is not decisive.
+We did not consider the order of applying optimisations. A particular order could be optimal. However, as the composite optimisation is repeated until the result is constant, the precise order probably is not decisive.
+\newline
+In the following sections we will look at the implementation of the four stages
 
 

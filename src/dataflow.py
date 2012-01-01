@@ -102,7 +102,7 @@ class Dataflow(object):
             for i,block in enumerate(self.graph.blocks):
             
                 #Set inset
-                oldin = block.inset
+                oldin = dict(block.inset)
                 block.inset = {}
                 pred = self.graph.get_in_edges(block)
                 for pre in pred:
@@ -111,8 +111,8 @@ class Dataflow(object):
                     for key in p.outset:
                         block.inset[key] = p.outset[key]
                 #Set outset
-                oldout = block.outset
-                block.outset =  block.genset
+                oldout = dict(block.outset)
+                block.outset = dict(block.genset)
                 for key in block.inset:
                     if key not in block.killset:
                         block.outset[key] = block.inset[key]
@@ -124,8 +124,16 @@ class Dataflow(object):
                 #    print oldin, "\n"
                 #    print block.inset, "\n"
                 #    print block.killset
-                if oldout != block.outset or block.inset != oldin:
+                if not (self.compare_dict(oldout, block.outset) and self.compare_dict(block.inset, oldin)):
                     change = True
+    
+    def compare_dict(self,a,b):
+        if len(a) != len(b):
+            return False
+        for key in a:
+            if key not in b:
+                return False
+        return True
     
     def print_sets(self):
         """
@@ -213,7 +221,7 @@ def main():
     from asmyacc import parser
 
     flat = []
-    for line in open('../benchmarks/slalom.s', 'r').readlines():
+    for line in open('../benchmarks/pi.s', 'r').readlines():
         if not line.strip(): continue
         flat.append(parser.parse(line))
     flat = parse_instr.parse(flat)

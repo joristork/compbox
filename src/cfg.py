@@ -27,6 +27,10 @@ class BasicBlock(object):
         
         self.killown = {}
         self.reach = {}
+        self.liveout = []
+        self.livein = []
+        self.live_in_node = []
+        self.live_in_node_reg = []
         
         if not instr:
             self.instructions = []
@@ -197,13 +201,11 @@ class CFG(object):
         You can pass the name of a block or the 
         """
         _out = []
-        if type(block) == str:
-            block = self.get_block(block)
-        
-        if block:
-            for edge in self.edges:
-                if (edge[0] == block.name):
-                    _out.append(edge)
+        if type(block) == BasicBlock:
+            block = block.name
+        for edge in self.edges:
+            if (edge[0] == block):
+                _out.append(edge)
         return _out
         
     def get_in_edges(self, block):
@@ -211,12 +213,11 @@ class CFG(object):
         Returns all (a list) edges that go into the given block.
         """
         _in = []
-        if type(block) == str:
-            block = self.get_block(block)
-        if block: 
-            for edge in self.edges:
-                if (edge[1] == block.name):
-                    _in.append(edge)
+        if type(block) == BasicBlock:
+            block = block.name
+        for edge in self.edges:
+            if (edge[1] == block):
+                _in.append(edge)
         return _in
     
     def get_blockname(self, block):

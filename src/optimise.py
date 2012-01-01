@@ -14,6 +14,9 @@ import flat as flat_opt
 from asmyacc import parser
 from ir import Raw
 from cfg import CFG
+from dataflow import Dataflow
+from liveness import Liveness
+
 import block_optimise as b_opt
 
 
@@ -108,6 +111,15 @@ class Optimiser(object):
         for graphnr, graph in enumerate(graphs):
             self.logger.info('graph %d of %d' % (graphnr + 1, len(graphs)))
 
+            Dataflow(graph)
+            l = Liveness(graph)
+
+            #self.logger.info('Performing liveness optimalisation on graph')
+            #change = True
+            #while change:
+            #    l.analyse()
+            #    change = l.optimise()     
+                        
             for blocknr, block in enumerate(graph.blocks):
             
                 self.logger.debug('block %d of %d' % (blocknr + 1, len(graph.blocks)))
@@ -165,9 +177,11 @@ def main():
     usage = "usage: %prog [options] file"
     parser = OptionParser(usage)
     parser.add_option("-d", "--dest", dest="filename",
-                      help="save result in FILENAME")
+                      help="save result in FILENAME, overrides -e, --extension")
     parser.add_option("-v", "--verbosity", dest="verbosity",
             help="set verbosity (0: critical, 1: error, 2: warning, 3: info, 4: debug)")
+    parser.add_option("-e", "--extension", dest="extension",
+            help="save result in source filename + EXTENSION")
 
     (options, args) = parser.parse_args()
     if len(args) != 1:
@@ -175,6 +189,9 @@ def main():
 
     if not options.verbosity:
         options.verbosity = 2
+
+    if not options.extension:
+        options.extension = '.opt'
 
     logging_levels = {0: logging.CRITICAL,
                       1: logging.ERROR,
@@ -210,7 +227,7 @@ def main():
     if options.filename:
         target_filename = options.filename
     else:
-        target_filename = args[0] + '.opt'
+        target_filename = args[0] + options.extension
 
     targetfile = open(target_filename, 'w')
     logging.info('writing optimised assembly to file')

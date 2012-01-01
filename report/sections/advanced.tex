@@ -21,7 +21,7 @@ object.
 For all blocks the $\text{LIVE}_\text{in}$ and $\text{LIVE}_\text{out}$ sets are determined.
 The $\text{LIVE}_\text{in}$ set is determined by:
 \[
-\text{LIVE}_\text{in}[block] = \bigcup_{i \in \text{block}}(used\_regs[i]) - (registers\_set\_in\_block\_before[i]).
+\text{LIVE}_\text{in}[\text{block}] = \bigcup_{i \in \text{block}}(used\_regs[i]) - (registers\_set\_in\_block\_before[i]).
 \]
 The $\text{LIVE}_\text{out}$ set by:
 \begin{align*}
