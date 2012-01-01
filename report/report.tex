@@ -11,10 +11,31 @@
 \usepackage{graphicx}
 \usepackage{syntax}
 \usepackage{listings}
-\input mips.sty
 \usepackage{float}
-\usepackage{color}
+\usepackage[usenames,dvipsnames]{color}
 \usepackage{mips}
+\usepackage{verbatim}
+
+\usepackage{bold-extra}
+
+\definecolor{light-gray}{gray}{0.97}
+
+\lstset{
+         basicstyle=\footnotesize\ttfamily,
+         numbers=left,               
+         numberstyle=\tiny,                      
+         numbersep=8pt,              
+         tabsize=2,        
+         breaklines=true,            
+         keywordstyle=\textbf,
+         stringstyle=\ttfamily,
+         showspaces=false,
+         showtabs=false,
+         xleftmargin=17pt,
+         showstringspaces=false, 
+}
+
+
 
 %
 %  Front page stuff
@@ -23,19 +44,6 @@
 \title{A peephole optimiser for SimpleScalar DLX assembly code}
 \author{J. Stork, L. Swartsenburg and J. Zuiddam}
 
-\lstset{ %
-language=Python,                % the language of the code
-basicstyle=\footnotesize,       % the size of the fonts that are used for the code
-backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
-showspaces=false,               % show spaces adding particular underscores
-showstringspaces=false,         % underline spaces within strings
-showtabs=false,                 % show tabs within strings adding particular underscores
-frame=single,                   % adds a frame around the code
-tabsize=2,                      % sets default tabsize to 2 spaces
-captionpos=b,                   % sets the caption-position to bottom
-breaklines=true,                % sets automatic line breaking
-breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
-}
 
 %
 %  Content
