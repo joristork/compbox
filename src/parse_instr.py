@@ -74,7 +74,7 @@ class Instruction(object):
                 if type(ins.args[0]) == Register:
                     self.need = [ins.args[0]]
                     if ins.args[0].expr == "$31":
-                        self.need += [Register("$2"), Register("$3"),Register("$16"),Register("$17"),Register("$18"),Register("$19"),Register("$20"),Register("$21"),Register("$22"),Register("$23"),Register("$f0"),Register("$fp"),Register("$sp"),Register("$f20"),Register("$f22"),Register("$f24"),Register("$f26"),Register("$f28"),Register("$f30")]
+                        self.need += [Register("$2"), Register("$3"),Register("$16"),Register("$17"),Register("$18"),Register("$19"),Register("$20"),Register("$21"),Register("$22"),Register("$23"),Register("$f0"),Register("$f1"),Register("$f2"),Register("$f3"),Register("$fp"),Register("$sp"),Register("$f20"),Register("$f22"),Register("$f24"),Register("$f26"),Register("$f28"),Register("$f30")]
                 else:
                     self.label = [ins.args[0]]
                 
@@ -94,7 +94,7 @@ class Instruction(object):
             if len(ins.args) == 1:
                 self.need = [ins.args[0]]
                 if ins.args[0].expr == "$31":
-                    self.need += [Register("$2"), Register("$3"),Register("$16"),Register("$17"),Register("$18"),Register("$19"),Register("$20"),Register("$21"),Register("$22"),Register("$23"),Register("$f0"),Register("$fp"),Register("$sp"),Register("$f20"),Register("$f22"),Register("$f24"),Register("$f26"),Register("$f28"),Register("$f30")]            
+                    self.need += [Register("$2"), Register("$3"),Register("$16"),Register("$17"),Register("$18"),Register("$19"),Register("$20"),Register("$21"),Register("$22"),Register("$23"),Register("$f0"),Register("$f1"),Register("$f2"),Register("$f3"),Register("$fp"),Register("$sp"),Register("$f20"),Register("$f22"),Register("$f24"),Register("$f26"),Register("$f28"),Register("$f30")]     
             else:
                 raise Exception("Invalid number of args for ins: ", ins.instr)
             
