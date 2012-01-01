@@ -6,14 +6,14 @@ Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
 The "useful instruction categories" module
 
 Description:
-    blah
+    Two lists and a dict to categorise instructions in ways that are useful for
+    the peephole optimisers.
 
 """
 
 
 """
-Instructions (keys) that respectively assign to the registers in
-args[(values)]
+instructions (keys) that respectively assign to the registers in args[(values)]
 
 """
 assign_to = {
@@ -76,8 +76,9 @@ assign_to = {
 
 
 """ 
-These instruction types may be subject to substituting copy references with
-original references as part of a copy propagation optimisation
+these instruction types may be subject to substituting copied-to register
+references with original register references as part of a copy propagation
+optimisation (see report)
 
 """
 copy_prop_targets = [
@@ -158,9 +159,12 @@ copy_prop_targets = [
 
 
 """ 
-If copy propagate optimiser encounters one of these instructions during a
-scan of instructions below a copy, no instructions beyond that instruction
-may be considered safe 
+if a copy propagate optimiser encounters one of these instructions with a
+copied-to register reference or a copied-from register reference in its
+arguments list during a scan of instructions below a copy, no instructions
+beyond that instruction may be considered safe; ultimately this list should be
+empty, since it just holds instructions we haven't checked for format and
+semantics
 
 """
 copy_prop_unsafe = [

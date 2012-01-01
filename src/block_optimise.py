@@ -14,6 +14,8 @@ Description:
         ConstantFold
         DeadCode
         CopyPropagation
+    
+    Other potential bb-optimisations to be found in block_optimise_lab.py
 
 """
 
@@ -135,8 +137,18 @@ class CopyPropagation(BlockOptimiser):
     """ after copy, propagate original variable where copy unaltered """
 
     def propagate_from_move(self, i, ins, opt):
-        """ if a move, substitutes subsequent uses of unaltered copy value """
+        """ 
+        triggered by a move instruction; ignores non-instructions and
+        instructions not containing the relevant registers; substitutes
+        subsequent uses of unaltered copied-to (copy) register with the original
+        (orig) register, until it finds an unsafe instruction with the orig or
+        copy register, or until the orig or copy register are altered
+        (substitution can still be done in the altering instruction) 
+        
+        """
+
         optimised = opt
+
         if ins.instr == 'move': 
             orig = ins.args[1]
             copy = ins.args[0] # nb: move not explicity defined for simplescalar
@@ -212,11 +224,7 @@ class CopyPropagation(BlockOptimiser):
                             
 
     def suboptimisation(self):
-        """ 
-        finds copies; then: if unaltered copy used later, substitute with
-        original; else ignore
-        
-        """
+        """ triggers propagate_from_move() when move instruction found """
 
         self.logger = logging.getLogger('CopyPropagation')
         optimised = False
@@ -229,20 +237,24 @@ class CopyPropagation(BlockOptimiser):
 
 class DeadCode(BlockOptimiser):
     """ 
-    Finds and removes instructions that assign a value that is then never used.  
+    finds and removes instructions that assign a value that is then never used.  
     
     """
 
 
     def subscan(self, i, ins, opt, cand_reg_index):
         """ 
-        Searches subsequent instructions, and: stops if candidate register is
-        used; or removes the candidate instruction if register is overwritten.
-        Note: the only instruction object without an args attribute is the nop
-        instruction. Such instructions are ignored.
+        searches subsequent instructions, and: stops if candidate register is
+        used; or removes the candidate instruction if register is overwritten;
+        note: the only instruction object without an args attribute is the nop
+        instruction, and such instructions are ignored; note also, certain
+        registers not candidates due to being used for function parameters or
+        other more permanent values
 
         """
+
         optimised = opt
+
         for i2, ins2 in enumerate(self.peephole[i+1:len(self.peephole)]):
 
             candidate_reg = ins.args[cand_reg_index]
@@ -284,7 +296,11 @@ class DeadCode(BlockOptimiser):
 
 
     def suboptimisation(self):
-        """   """
+        """ 
+        triggers subscan() for every peephole instruction in assign_to
+        category  
+        
+        """
         
         optimised = False
         self.logger = logging.getLogger('DeadCode')
@@ -302,8 +318,8 @@ class DeadCode(BlockOptimiser):
 class ConstantFold(BlockOptimiser):
     """ 
     replaces arithmetic instructions with only compile-time constants in
-    arguments, a load immediate instruction to assign the corresponding value to
-    the same target register 
+    arguments, with a load immediate instruction to assign the corresponding
+    value to the same target register 
     
     """
 
@@ -311,11 +327,11 @@ class ConstantFold(BlockOptimiser):
     def addu(self, i, ins, opt, consts):
         """ 
         carries out constant folding on addu instructions; though not guaranteed
-        to replicate unsigned behaviour, this should be ok for our benchmarks
-        (c.f. report); note that addu's, as manifest in benchmark suite, seem to
-        incorporate addiu functionality since no addiu's are present, and at
-        least one instance of a compile-time value was found in the arguments of
-        an addu instruction, in the benchmark suite
+        to replicate unsigned behaviour, this should be ok for our benchmarks;
+        note that addu's, as manifest in benchmark suite, seem to incorporate
+        addiu functionality since no addiu's are present, and at least one
+        instance of a compile-time value was found in the arguments of an addu
+        instruction, in the benchmark suite
         
         """    
 

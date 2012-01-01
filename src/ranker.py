@@ -1,7 +1,18 @@
 #!/usr/bin/env python
+""" 
+File:         ranker.py
+Course:       Compilerbouw 2011
+Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
 
-# ranker.py
-# author: Joris Stork
+The peephole module
+
+Description:
+    A little utility to compile a dict that ranks the instructions in the
+    benchmark suite by incidence. Opcodes are keys, with the numbers of
+    occurrences of the instruction in the benchmark suite stored in the
+    corresponding dict value. 
+
+"""
 
 from optparse import OptionParser
 from asmyacc import parser
