@@ -20,7 +20,6 @@ import logging
 
 class AlgebraicTransformations(BlockOptimiser):
     """ contains various algebraic transformation optimisations  """
-    # Need to look for values of variables
 
 
     def divd_to_sra(self, i, ins, opt, consts):
