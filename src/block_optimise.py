@@ -242,11 +242,43 @@ class DeadCode(BlockOptimiser):
     
     """
 
-
     def j_thirty_one_present(self):
-        """ (unimplemented) returns true if a j$31 instruction is present """
+        """ 
+        (unimplemented) returns true if a j$31 instruction is present in
+        block 
+        
+        """
 
-        pass
+        for instruction in self.block:
+
+            if not isinstance(instruction,Instr):
+                continue
+            elif str(instruction.instr) == 'j':
+                arg = instruction.args[0]
+                if isinstance(arg, str):
+                    if arg == '$31':
+                        return True
+                else:
+                    if arg == '$31':
+                        return True
+
+        return False
+            
+
+    def jal_present(self):
+        """ 
+        (unimplemented) returns true if a j$31 instruction is present in
+        block 
+        
+        """
+
+        for instruction in self.block:
+            if not isinstance(instruction,Instr):
+                continue
+            elif str(instruction.instr) == 'jal':
+                return True
+        return False
+
 
     def subscan(self, i, ins, opt, cand_reg_index):
         """ 
@@ -304,11 +336,13 @@ class DeadCode(BlockOptimiser):
     def suboptimisation(self):
         """ 
         triggers subscan() for every peephole instruction in assign_to
-        category  
+        category; aborts if jal or j $31 instruction in block
         
         """
         
         optimised = False
+        if (self.j_thirty_one_present()) | (self.jal_present()):
+            return optimised
         self.logger = logging.getLogger('DeadCode')
         candidate = None
         for i, ins in enumerate(self.peephole):
