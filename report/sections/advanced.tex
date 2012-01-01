@@ -1,0 +1,36 @@
+In instruction parsing all instructions are parsed to find out to which
+register they write and which registers they need. With this information,
+dataflow analysis and liveness analysis can be done. Noteworthy is that both
+analysis implementations take the double precision floating point 
+operations into account. This means, that two consecutive registers are used when 
+appropriate.
+\subsubsection{Dataflow analysis}
+With a control flow graph (CFG) object we can create a dataflow object. When a 
+dataflow object is created, first the gen set of each block is determined and 
+set in the basicblock. After this, the reach of each block has to be calculated
+(which other blocks can be reached using the directed edges of the graph). With 
+this information, we can generate the kill set for each block.\newline
+\newline
+Now that we have the gen- and kill-set of each block, we can calculate the
+in and out sets using the reaching definitions algorithm.\newline
+\newline
+A overview of the sets and the number of iterations needed for the reaching 
+definitions algorithm can be printed by calling a print function on the dataflow
+object.
+\subsubsection{Liveness analysis}
+For all blocks the $LIVE_{in}$ and $LIVE_{out}$ sets are determined.\\
+The $LIVE_{in}$ set is determined by:\\
+\begin{equation}
+LIVE_{in}[block] = \bigcup_{i \in block}(used\_regs[i]) - (registers\_set\_in\_block\_before[i])
+\end{equation}
+The $LIVE_{out}$ set by:
+\begin{equation}
+LIVE_{out}[block] = \bigcup_{p \in succ[block]} LIVE_{in}[p]\\
+\end{equation}
+\begin{equation}
+LIVE_{out}[finalblock] = \emptyset
+\end{equation}
+If a \texttt{jal} or \texttt{jalr} instruction is encountered, it is not clear 
+anymore which registers are used in the function the jump points to. We will 
+have to assume the worst and set all registers minus the registers that
+are set before the jump as $LIVE_{in}$ set for that block.
