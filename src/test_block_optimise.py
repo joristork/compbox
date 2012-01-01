@@ -17,25 +17,6 @@ class TestBlockOptimisers(unittest.TestCase):
         pass
 
 
-#    def test_algebra(self):
-#        dest1 = ir.Register('$dest1')
-#        dest2 = ir.Register('$dest2')
-#        divdest1 = ir.Register('divdest1')
-#        instrs = [ir.Instr('li', [dest1, 1634563464])]
-#        instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
-#        instrs.append(ir.Instr('li', [dest2, 64]))
-#        instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
-#        instrs.append(ir.Instr('div.d', [divdest1,dest1,dest2]))
-#        instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
-#        block = cfg.BasicBlock(instrs)
-#        bop = block_optimise.AlgebraicTransformations(block = block)
-#        bop.optimise()
-#        expected = str(ir.Instr('sra', [divdest1, 1634563464, 6.0]))
-#        result = str(block[4])
-#        #TODO: map assertion to list of (expected,result)
-#        self.assertTrue(result == expected)
-
-
     def test_const_fold_addu(self):
         dest1 = ir.Register('$dest1')
         dest2 = ir.Register('$dest2')
@@ -62,8 +43,15 @@ class TestBlockOptimisers(unittest.TestCase):
 
     def test_copyprop_move(self):
         copy1 = ir.Register('$copy1')
-        orig1 = ir.Register('$orig11')
-        instrs = [ir.Instr('filler', ['dest',1634563464,64])]
+        orig1 = ir.Register('$orig1')
+        sp = ir.Register('$sp')
+        fp = ir.Register('$fp')
+        r31 = ir.Register('$31')
+        offsetadd1 = ir.Register('20($sp)')
+        offsetadd1_f = ir.Register('20($fp)')
+        offsetadd2 = ir.Register('16($sp)')
+        offsetadd2_f = ir.Register('16($fp)')
+        instrs = [ir.Instr('filler', ['$filler',1634563464,64])]
         instrs.append(ir.Instr('move', [copy1, orig1]))
         instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
         instrs.append(ir.Instr('addu', ['$adest1',copy1,'somereg']))
@@ -71,18 +59,27 @@ class TestBlockOptimisers(unittest.TestCase):
         instrs.append(ir.Instr('addu', [copy1,'somereg',copy1]))
         instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
         instrs.append(ir.Instr('addu', ['$adest2',copy1,'somereg']))
+        instrs.append(ir.Instr('move', [sp,fp]))
+        instrs.append(ir.Instr('lw', [r31, offsetadd1]))
+        instrs.append(ir.Instr('lw', [fp, offsetadd2]))
+        instrs.append(ir.Instr('addu', [sp,sp,24]))
         block = cfg.BasicBlock(instrs)
         bop = block_optimise.CopyPropagation(block = block)
         bop.optimise()
-        expected1 = str(ir.Instr('addu', ['$adest1', orig1, 'somereg']))
-        result1 = str(block[3])
-        expected2 = str(ir.Instr('addu', [copy1, 'somereg', orig1]))
-        result2 = str(block[5])
-        expected3 = str(ir.Instr('addu', ['$adest2', copy1, 'somereg']))
-        result3 = str(block[7])
-        self.assertTrue(result1 == expected1)
-        self.assertTrue(result2 == expected2)
-        self.assertTrue(result3 == expected3)
+        exp_instrs = [ir.Instr('filler', ['$filler',1634563464,64])]
+        exp_instrs.append(ir.Instr('move', [copy1, orig1]))
+        exp_instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
+        exp_instrs.append(ir.Instr('addu', ['$adest1', orig1, 'somereg']))
+        exp_instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
+        exp_instrs.append(ir.Instr('addu', [copy1, 'somereg', orig1]))
+        exp_instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
+        exp_instrs.append(ir.Instr('addu', ['$adest2', copy1, 'somereg']))
+        exp_instrs.append(ir.Instr('move', [sp,fp]))
+        exp_instrs.append(ir.Instr('lw', [r31, offsetadd1_f]))
+        exp_instrs.append(ir.Instr('lw', [fp, offsetadd2_f]))
+        exp_instrs.append(ir.Instr('addu', [sp,sp,24]))
+        for i in xrange(len(block)):
+            self.assertTrue(str(block[i]) == str(exp_instrs[i]))
 
 
     def test_dead_code(self):
@@ -92,7 +89,7 @@ class TestBlockOptimisers(unittest.TestCase):
         reg4 = ir.Register('$4')
         reg5 = ir.Register('$5')
         sp = ir.Register('$sp')
-        dp = ir.Register('$dp')
+        fp = ir.Register('$fp')
         r31 = ir.Register('$31')
         offsetadd1 = ir.Register('20($sp)')
         offsetadd2 = ir.Register('16($sp)')
@@ -101,17 +98,17 @@ class TestBlockOptimisers(unittest.TestCase):
         instrs.append(ir.Instr('filler2', ['dest',9999,64]))
         instrs.append(ir.Instr('sll', [reg3, reg4, 10]))
         instrs.append(ir.Instr('filler3', ['dest',9999,64]))
-        instrs.append(ir.Instr('lw', [reg3, '0(dp)']))
+        instrs.append(ir.Instr('lw', [reg3, '0($dp)']))
         instrs.append(ir.Instr('filler4', ['dest',9999,64]))
         instrs.append(ir.Instr('addu', [reg1,reg2,reg4]))
         instrs.append(ir.Instr('filler5', ['dest',9999,64]))
         instrs.append(ir.Instr('addu', [reg3,reg1,reg2]))
         instrs.append(ir.Instr('filler6', ['dest',9999,64]))
         instrs.append(ir.Instr('div', [reg1,reg2,reg4]))
-        instrs.append(ir.Instr('move', [sp,dp]))
+        instrs.append(ir.Instr('move', [sp,fp]))
         instrs.append(ir.Instr('lw', [r31, offsetadd1]))
-        instrs.append(ir.Instr('lw', [dp, offsetadd2]))
-        instrs.append(ir.Instr('addu', [sp,dp,24]))
+        instrs.append(ir.Instr('lw', [fp, offsetadd2]))
+        instrs.append(ir.Instr('addu', [sp,sp,24]))
         block = cfg.BasicBlock(instrs)
         bop = block_optimise.DeadCode(block = block)
         bop.optimise()
@@ -124,13 +121,31 @@ class TestBlockOptimisers(unittest.TestCase):
         exp_instrs.append(ir.Instr('addu', [reg3,reg1,reg2]))
         exp_instrs.append(ir.Instr('filler6', ['dest',9999,64]))
         exp_instrs.append(ir.Instr('div', [reg1,reg2,reg4]))
-        exp_instrs.append(ir.Instr('move', [sp,dp]))
+        exp_instrs.append(ir.Instr('move', [sp,fp]))
         exp_instrs.append(ir.Instr('lw', [r31, offsetadd1]))
-        exp_instrs.append(ir.Instr('lw', [dp, offsetadd2]))
-        exp_instrs.append(ir.Instr('addu', [sp,dp,24]))
+        exp_instrs.append(ir.Instr('lw', [fp, offsetadd2]))
+        exp_instrs.append(ir.Instr('addu', [sp,sp,24]))
         for i in xrange(len(block)):
             self.assertTrue(str(block[i]) == str(exp_instrs[i]))
 
+
+#    def test_algebra(self):
+#        dest1 = ir.Register('$dest1')
+#        dest2 = ir.Register('$dest2')
+#        divdest1 = ir.Register('divdest1')
+#        instrs = [ir.Instr('li', [dest1, 1634563464])]
+#        instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
+#        instrs.append(ir.Instr('li', [dest2, 64]))
+#        instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
+#        instrs.append(ir.Instr('div.d', [divdest1,dest1,dest2]))
+#        instrs.append(ir.Instr('filler', ['dest',1634563464,64]))
+#        block = cfg.BasicBlock(instrs)
+#        bop = block_optimise.AlgebraicTransformations(block = block)
+#        bop.optimise()
+#        expected = str(ir.Instr('sra', [divdest1, 1634563464, 6.0]))
+#        result = str(block[4])
+#        #TODO: map assertion to list of (expected,result)
+#        self.assertTrue(result == expected)
 
 
 if __name__ == '__main__':
