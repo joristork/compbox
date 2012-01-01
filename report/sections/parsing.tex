@@ -64,8 +64,8 @@ Each expression is stored in a Python object of type \verb!Raw!, \verb!Label!, \
 To perform dataflow analysis and liveness analysis, we need to parse each 
 instruction to determine which registers are set and which registers are used. 
 All instructions have a different format, so they need to be parsed seperatly. 
-This process is done in the parse\_instr module. When we run parse\_instr.parse,
-it parses each Instr object from the ir module and sets the register that the
+This process is done in the \code{parse\_instr} module. When we run \code{parse\_instr.parse},
+it parses each Instr object from the \code{ir} module and sets the register that the
 instructoin writes to, the registers that it needs, the offset for writing to 
 memory, and immidiate values. An example:
 \begin{lstlisting}
