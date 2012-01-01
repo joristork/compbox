@@ -17,6 +17,7 @@
 
 \usepackage{bold-extra}
 
+\newcommand{\code}[1]{\texttt{#1}}
 
 \lstset{
          basicstyle=\footnotesize\ttfamily,
@@ -50,6 +51,7 @@
 \begin{document}
 \maketitle
 
+\tableofcontents
 
 \chapter{Introduction}
 \label{sec:introduction}
@@ -57,7 +59,7 @@
 
 
 \chapter{Implementation}
-
+In this section we discuss our peephole optimiser. We first give an overview of the general design of the optimiser. We then discuss the implementation of the parts of the optimiser.
 \section{Design}
 \label{sec:design}
 \input{sections/design}
