@@ -145,14 +145,14 @@ class Optimiser(object):
                     if subopt_changes:self.stats['cp'] += cp_opt.stats['cp']
                     done = done & (not subopt_changes)
                     
-                    subopt_changes = dc_opt.optimise()
-                    if subopt_changes:self.stats['dc'] += dc_opt.stats['dc']
-                    done = done & (not subopt_changes)
+                    #subopt_changes = dc_opt.optimise()
+                    #if subopt_changes:self.stats['dc'] += dc_opt.stats['dc']
+                    #done = done & (not subopt_changes)
 
-        self.logger.info('peephole optimisations done:')
+        self.logger.info('basic-block peephole optimisations done:')
         self.logger.info('\t\tconstant folds: %d' % (self.stats['cf']))
         self.logger.info('\t\tcopy propagations: %d' % (self.stats['cp']))
-        self.logger.info('\t\tdead code removals: %d' % (self.stats['dc']))
+        self.logger.info('\t\tdead code removes: %d' % (self.stats['dc']))
         self.logger.info('joining graphs to frames')
         frames = [graph.cfg_to_flat() for graph in graphs]
         self.logger.info('joining frames to flat')

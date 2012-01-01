@@ -6,13 +6,18 @@ Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
 The peephole module
 
 Description:
-    blah
+    Contains the Peephole and Peeper classes used for optimising code.
 
 """
 
 
 class Peephole(object):
-    """ Contains an iterable list of instructions """
+    """ 
+    wrapper for an iterable list of instructions; implemented to emulate a
+    standard Python iterable object; optimisations are made on one Peephole
+    instance at a time
+    
+    """
 
     def __init__(self, block, start, size):
         self.block = block
@@ -30,7 +35,8 @@ class Peephole(object):
         if self.counter >= self.size:
             raise StopIteration
         else:
-            self.current_instruction = self.block[self.start_index + self.counter]
+            index1 = self.start_index + self.counter
+            self.current_instruction = self.block[index1]
             self.counter += 1
         return self.current_instruction
 
@@ -41,7 +47,9 @@ class Peephole(object):
         try:
             return self.block[self.start_index + index]
         except TypeError:
-            return self.block[self.start_index + index.start:self.start_index + index.stop]
+            index1 = self.start_index + index.start
+            index2 = self.start_index + index.stop
+            return self.block[index1:index2]
 
 
     def __setitem__(self, index, value):
@@ -56,7 +64,9 @@ class Peephole(object):
         try:
             del self.block.instructions[self.start_index + index]
         except TypeError:
-            del self.block.instructions[self.start_index + index.start:self.start_index + index.stop]
+            index1 = self.start_index + index.start
+            index2 = self.start_index + index.stop
+            del self.block.instructions[index1:index2]
         self.size = self.size - 1
 
 
@@ -68,11 +78,14 @@ class Peephole(object):
 
 
 class Peeper(object):
-    """   """
+    """ 
+    generates successive peepholes so that these "slide" over a basic block
+    of instructions 
+    
+    """
 
     def __init__(self, block, peephole_size):
         self.block = block
-        """ raise an error here if attempt to set size too big """
         self.p_size = peephole_size
         self.counter = 0
 
