@@ -174,6 +174,11 @@ def main():
     c = CFG(flat)
     d = Dataflow(c)
     l = Liveness(c)
+    change = True
+    while change:
+        l.analyse()
+        change = l.optimise()   
+        print change      
     l.print_live()
     #1d.print_sets()
     #d.get_reach(c.get_block("$L7"))
