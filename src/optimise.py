@@ -145,9 +145,9 @@ class Optimiser(object):
                     if subopt_changes:self.stats['cp'] += cp_opt.stats['cp']
                     done = done & (not subopt_changes)
                     
-                    #subopt_changes = dc_opt.optimise()
-                    #if subopt_changes:self.stats['dc'] += dc_opt.stats['dc']
-                    #done = done & (not subopt_changes)
+                    subopt_changes = dc_opt.optimise()
+                    if subopt_changes:self.stats['dc'] += dc_opt.stats['dc']
+                    done = done & (not subopt_changes)
 
         self.logger.info('basic-block peephole optimisations done:')
         self.logger.info('\t\tconstant folds: %d' % (self.stats['cf']))
