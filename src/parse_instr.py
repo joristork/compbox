@@ -73,22 +73,28 @@ class Instruction(object):
             if len(ins.args) == 1:
                 if type(ins.args[0]) == Register:
                     self.need = [ins.args[0]]
+                    if ins.args[0].expr == "$31":
+                        self.need += [Register("$2"), Register("$3"),Register("$16"),Register("$17"),Register("$18"),Register("$19"),Register("$20"),Register("$21"),Register("$22"),Register("$23"),Register("$f0"),Register("$fp"),Register("$sp"),Register("$f20"),Register("$f22"),Register("$f24"),Register("$f26"),Register("$f28"),Register("$f30")]
                 else:
                     self.label = [ins.args[0]]
+                
                 
             else:
                 raise Exception("Invalid number of args for ins: ", ins.instr)
         
         elif ins.instr == 'jal':
-            self.gen = [Register("$31"),Register("$2"),Register("$3")] #Return address and values
+            self.gen = [Register("$31"),Register("$2"),Register("$3"),Register("$f0")] #Return address and values
             #Reg $4,5,6,7 are registers that are used for fuction arguments.
             # $f12, $f13, $f14, $f15 parameter registers zijn voor functies. 
             # http://msdn.microsoft.com/en-us/library/ms253512%28v=vs.90%29.aspx            
             #it is not clear which one will be used.
             self.need = [Register("$4"),Register("$5"),Register("$6"),Register("$7"),Register("$fp"), Register("$sp"),Register("$f12"),Register("$f13"),Register("$f14"),Register("$f15")]
+            
         elif ins.instr == 'jr':
             if len(ins.args) == 1:
                 self.need = [ins.args[0]]
+                if ins.args[0].expr == "$31":
+                    self.need += [Register("$2"), Register("$3"),Register("$16"),Register("$17"),Register("$18"),Register("$19"),Register("$20"),Register("$21"),Register("$22"),Register("$23"),Register("$f0"),Register("$fp"),Register("$sp"),Register("$f20"),Register("$f22"),Register("$f24"),Register("$f26"),Register("$f28"),Register("$f30")]            
             else:
                 raise Exception("Invalid number of args for ins: ", ins.instr)
             
@@ -99,7 +105,7 @@ class Instruction(object):
                 # http://msdn.microsoft.com/en-us/library/ms253512%28v=vs.90%29.aspx
                 #it is not clear which one will be used.
                 self.need = [ins.args[0],Register("$4"),Register("$5"),Register("$6"),Register("$7"),Register("$fp"), Register("$sp"),Register("$f12"),Register("$f13"),Register("$f14"),Register("$f15")]
-                self.gen = [Register("$2"),Register("$3")] #Return values
+                self.gen = [Register("$2"),Register("$3"),Register("$f0")] #Return values
             else:
                 raise Exception("Invalid number of args for ins: ", ins.instr)
             
@@ -230,6 +236,7 @@ class Instruction(object):
         elif ins.instr == 'lw':
             if len(ins.args) == 2:
                 g = re.match(Creg, ins.args[1])
+                
                 if g:
                     self.c = g.group(1)
                     self.need = [Register(g.group(2))]
@@ -260,15 +267,27 @@ class Instruction(object):
                 
         elif ins.instr == 'l.s':
             if len(ins.args) == 2:
-                self.need = [ins.args[1]]
+                g = re.match(Creg, ins.args[1])
+                
+                if g:
+                    self.c = g.group(1)
+                    self.need = [Register(g.group(2))]
+                else:
+                    self.need = [ins.args[1]] 
                 self.gen = [ins.args[0]]
             else:
                 raise Exception("Invalid number of args for ins: ", ins.instr)
                 
         elif ins.instr == 'l.d':
             if len(ins.args) == 2:
-                self.need = [ins.args[1]]
-                self.gen = self.double_reg(ins.args[0])
+                g = re.match(Creg, ins.args[1])
+                
+                if g:
+                    self.c = g.group(1)
+                    self.need = [Register(g.group(2))]
+                else:
+                    self.need = [ins.args[1]] 
+                self.gen = [ins.args[0]]
             else:
                 raise Exception("Invalid number of args for ins: ", ins.instr)
                 
