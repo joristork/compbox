@@ -112,8 +112,8 @@ class Optimiser(object):
             self.logger.info('graph %d of %d' % (graphnr + 1, len(graphs)))
 
             Dataflow(graph)
-            Liveness(graph)
-
+            l = Liveness(graph)
+            #l.optimise()
             for blocknr, block in enumerate(graph.blocks):
             
                 self.logger.debug('block %d of %d' % (blocknr + 1, len(graph.blocks)))
