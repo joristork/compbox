@@ -1,0 +1,204 @@
+This section describes the framework for the basic-block optimisers in our
+peephole optimiser, before discussing the different optimisers as we have
+implemented them.\\
+
+In order to focus our optimisation efforts, we drew up a ranking of instructions
+in the benchmark suite (see table~\ref{tab:irank} on page~\pageref{tab:irank})
+using an instruction ranker we made for the purpose (source in appendix
+section~\ref{sec:ranker} on page~\pageref{sec:ranker}). Based on the incidence
+of certain instructions, and on the fact that we wished to develop basic-block
+optimisers in parallel with both global and ``advanced'' (dataflow and liveness
+analysis based) optimisations, we decided to focus on: copy propagation; dead
+code removal; constant folding; and algebraic transformations.
+Subsections~\ref{sub:copyprop} through~\ref{sub:algebratrans} below describe
+these basic-block optimisations before discussing the choices and considerations
+involved in their respective implementations.\\
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{l l l l l l}
+\toprule
+opcode  &occurences &opcode  &occurences &opcode &occurences \\
+\midrule
+lw      &1885       &sub.d   &67         &bgtz    &7         \\ 
+addu    &1017       &mov.d   &60         &c.eq.d  &6         \\ 
+l.d     &789        &beq     &48         &srl     &6         \\ 
+move    &772        &cvt.d.w &39         &sltu    &5         \\ 
+sw      &651        &mtc1    &39         &lbu     &4         \\ 
+sll     &561        &add.s   &32         &mfhi    &4         \\ 
+j       &372        &lb      &24         &blez    &4         \\ 
+s.d     &347        &dsz     &22         &dmfc1   &4         \\ 
+jal     &297        &bc1f    &22         &trunc.w.d&4        \\ 
+la      &239        &cvt.d.s &21         &cvt.s.d &4         \\ 
+mul.d   &199        &nop     &21         &c.le.d  &4         \\ 
+subu    &193        &c.lt.d  &20         &div     &4         \\ 
+l.s     &163        &abs.d   &19         &neg.s   &3         \\ 
+li      &150        &sra     &17         &dsw     &3         \\ 
+add.d   &150        &mul.s   &13         &cvt.s.w &3         \\ 
+bne     &140        &dlw     &12         &xori    &2         \\ 
+slt     &130        &sb      &12         &div.s   &2         \\ 
+s.s     &78         &neg.d   &11         &mov.s   &2         \\ 
+mflo    &77         &bgez    &11         &bltz    &1         \\ 
+mult    &77         &sub.s   &11         &mfc1    &1         \\ 
+div.d   &71         &bc1t    &8          &or      &1         \\ 
+\bottomrule
+\end{tabular}
+\caption{Ranking of instructions}
+\label{tab:irank}
+\end{table}
+
+
+\subsection{Framework}
+\label{sub:peepframework}
+
+The \texttt{optimise} module's \texttt{Optimiser} class contains the
+\texttt{optimise()} function that serves, amongst other things, to instantiate
+and run the basic-block optimisers. After instantiating the optimisers,
+\texttt{optimise()} runs a loop that calls a sequence of basic-block
+sub-optimisations until this sequence stops altering the source code.\\
+
+The \texttt{BlockOptimiser} class in the \texttt{block\_optimise} module
+contains common attributes and tools needed for the different basic-block
+optimisations implemented in \texttt{BlockOptimiser}'s subclasses (also defined
+in \texttt{block\_optimise}. Notable amongst these tools are:
+\begin{itemize}
+    \item \texttt{block}: This is the \texttt{BasicBlock} object assigned to
+    this optimiser for optimisation. See the \texttt{cfg} module for the
+    definition of a \texttt{BasicBlock}
+    \item \texttt{optimise()}: The top-level \texttt{Optimiser} object mentioned
+    earlier calls this function to execute the sub-optimisation. This function
+    in turn enters a loop of calls to the \texttt{suboptimisation} function,
+    which ends when the suboptimisation reports that a pass failed to change the
+    code further.
+    \item \texttt{suboptimise()}: Implemented in each subclass of
+    \texttt{BlockOptimiser}, this function scans the peephole until it finds a
+    trigger instruction, at which point it calls the relevant suboptimisation
+    function, which in turn scans the rest of the peephole for optimisation
+    opportunities. Note that from this function up to the top
+    \texttt{Optimiser}, an \texttt{opt} or \texttt{optimised} boolean is return
+    to indicate whether an optimisation was executed at a lower level. This
+    enables higher-level functions move on to the next optimisation pass.
+    \item \texttt{reg\_indexes\_in()}: This function serves to obtain a list of
+    indexes at which a register was found an instruction's arguments list. Since
+    registers are sometimes used with an offset, e.g.\ \texttt{16(\$fp)}, this
+    function resorts to a regular expression matcher to find reliably find
+    instances of the register.
+    \item \texttt{reg\_in()}: Returns a boolean to indicate whether a register is
+    in an instruction's arguments.
+    \item \texttt{replace\_reg()}: Replaces a reference to one register with a
+    reference to another, in an instruction's arguments list. Like
+    \texttt{reg\_indexes\_in()}, this function uses regex matching to deal with
+    offset plus register value addressing.
+    \item \texttt{find\_constants()}: This function searches code above the
+    trigger instruction (in the case of constant folding) for \texttt{li}
+    instructions, and extracts the compile-time constants and their
+    corresponding registers.
+\end{itemize}
+
+
+The \texttt{peephole} module's \texttt{Peephole} and \texttt{Peeper} classes
+lend our optimiser its famous ``peephole'' quality. The \texttt{Peeper} class
+generates the successive peepholes required to produce the sliding peephole
+functionality for our optimisers. Like \texttt{BasicBlock} objects,
+\texttt{Peephole} objects emulate Python's built-in iterable containers, making
+for easy referencing, iteration and assignments of instructions in the peephole.
+The overall object-oriented structure of our peepholes and basic blocks allows
+for a more elegant handling of the peephole concept, where instructions are
+handled through various layers of abstraction.\\
+
+The \texttt{uic} module contains ``useful instruction categories'', notably:
+\texttt{copy\_prop\_targets}, which lists instructions that may be targetted for
+copy propagation; and \texttt{assign\_to}, which is a dictionary listing
+instructions that assign a value to a register, together with corresponding
+assigned-to register's index in the instruction's arguments list.\\
+
+Though not a part of our optimiser's basic block component, the unittests in
+\texttt{test\_\-block\_\-optimise} were essential to the development process.
+They served to test new functionality as it was added; to replicate bugs and
+test fixes; and to ensure that functionality did not break after code changes.\\
+
+Finally, it is worth mentioning that the block optimisers write statistics to
+the logger regarding the numbers of the respective optimisations carried out.
+These are printed at the top level when it has finished cycling the basic-block
+optimisations. Additionally, messages a logged for each instance of optimisation
+at verbosity level $4$ (``debug'').
+
+
+\subsection{Copy propagation}
+\label{sub:copyprop}
+
+Copy propagation paves the way for dead code removal (see
+section~\ref{sub:deadcode} below). It does so by finding instructions that copy
+the value in one register (let's call this the ``original'' register) to another
+register (the ``copy'' register). The copy propagation optimiser then scans
+subsequent code to substitute references to the ``copy'' register with
+references to the ``original'' register, where this does not alter the overall
+semantics of the code.\\
+
+The implementation in the \texttt{block\_optimise} module's
+\texttt{CopyPropagation} class triggers a copy propagation attempt every time it
+encounters a \texttt{move} instruction. Copy propagation is only performed on
+instructions in the \texttt{copy\_prop\_targets} category, defined in the
+\texttt{uic} module. The propagation attempt ends when either: the ``original''
+or ``copy'' register are altered in a way that makes propagation unsafe further
+down; or the ``copy'' or ``original'' register are found in an instruction
+classified as \texttt{copy\_prop\_unsafe} (also defined in \texttt{uic}).
+Subsection~\ref{sub:peepframework} above describes the register matching and
+substitution tools used in the course of copy propagation.
+
+
+\subsection{Dead code removal}
+\label{sub:deadcode}
+
+Dead code removal is the process of searching peepholes for registers that,
+after being assigned a value in the peephole, are then not used before being
+assigned another value in the same peephole. Copy propagation makes more such
+registers apparent to the dead code removal optimiser. The dead code optimiser
+triggers a sub-scan whenever it encounters an instruction classified in
+\texttt{uic.py} as \texttt{assign\_to}, i.e.\ as assigning a value to a
+register. The register that this instruction assigns to is taken via the index
+number stored in the same dict in \texttt{uic.py}. If the register is written to
+again within the same peephole without being used, the triggering instruction
+encountered earlier is removed from the basic block. It is worth mentioning here
+that the optimiser must take account of both (offset plus register value)
+references to normal registers, and (offset plus register value) references to
+registers used as function parameters for subsequent jump-and-link instructions.
+These appear to be registers \texttt{\$f12} through \texttt{\$f15} and
+\texttt{\$4} through \texttt{\$7}.
+
+
+\subsection{Constant folding}
+\label{sub:constfold}
+
+Constant folding replaces arithmetic operations involving compile-time constants
+with a load-immediate operation for the result of the arithmetic operation (to
+the same destination register). Keeping in mind the ranking of instructions in
+the benchmark suite, and the fact that our implementation needs an extra line of
+code or two for each type of arithmetic operation, we have only implemented
+constant folding for \texttt{addu} and \texttt{subu} instructions. These avoid
+the complication of bit manipulation in Python for non-unsigned instructions.
+They further avoid arithmetic instructions that write their results to the
+\texttt{hi} and \texttt{lo} registers, again due to the extra effort - albeit
+little more than a trivial one.
+
+
+\subsection{Algebraic transformations}
+\label{sub:algebratrans}
+
+The \texttt{block\_opt\_lab.py} file contains our work to-date on an algebraic
+transformations sub-optimiser, which we have chosen not to include in our final
+version of the optimiser. This optimiser replaces arithmetic operations with
+semantically equivalent operations that are more efficient. Our work to-date was
+on a transformation of \texttt{divd} instructions to \texttt{sra} instructions.
+We chose \texttt{divd} over \texttt{div} due to it high incidence ($71$) in the
+benchmark suite compared to the latter ($4$), and because the ``manual''
+provided for the SimpleScalar instruction set listed \texttt{div} as writing its
+results to \texttt{hi} and \texttt{lo} registers, a more complicated scenario to
+code for. It later transpired that the occurences of \texttt{div} in the
+benchmark suite write their results to a \texttt{\$fd} register.  Whilst our
+implementation passed our initial unit tests, no suitable targets for
+optimisation were found in the benchmark suite: only operations where the
+denominator was a multiple of $2$ could be transformed. Our only route to
+establishing this at compile-time are the \texttt{li} instructions in our
+peepholes. Yet the \texttt{li} instructions only use the non-floating-point
+registers, whereas \texttt{divd} obviously uses floating-point registers.

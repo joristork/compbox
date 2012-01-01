@@ -5,7 +5,12 @@ Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
 
 
 Description:
-    Defines the various subclasses of block optimiser. Currently implemented:
+    Defines the various subclasses of block optimiser. 
+    A block optimiser carries out optimisations through a Peephole object on
+    BasicBlock objects (cfg.py), which represent basic blocks in the source
+    code.
+    
+    The folllowing types of block optimisers are currently implemented:
         ConstantFold
         DeadCode
         CopyPropagation
@@ -24,14 +29,15 @@ import logging
 
 
 class BlockOptimiser(object):
-    """ Parent class for the various block optimisations.  """
+    """ parent class for the various block optimisations """
 
 
     def __init__(self, block = None, peephole_size = None):
-        """ By default the peephole size is that of the basic block """
+        """ by default the peephole size is that of the basic block """
 
         self.block = block
         self.stats = {'dc':0,'cp':0,'cf':0}
+
         if not peephole_size:
             self.p_size = len(block)
         else:
@@ -39,25 +45,22 @@ class BlockOptimiser(object):
 
 
     def set_block(self, block):
-        """ Optimiser can be re-assigned to a new block  """
-        
+        """ re-assigns a new block to the optimiser """
+
         self.block = block
 
 
     def set_peephole_size(self, size):
-        """ Optimiser can be tweaked with a new peephole size. """
+        """ changes optimiser's peephole size setting """
 
         self.p_size = size
 
 
-    def rename_temp_vars(self):
-        """ Renames temporary variables until bb is in normal form."""
-        pass
-
-    
     def reg_indexes_in(self, subject, args):
-        """ Returns indexes of occurences of subject in args """
+        """ returns indexes of occurences of subject in args """
+
         indexes = []
+        
         for i, arg in enumerate(args):
             if isinstance(arg, str):
                 m = re.search('\$\w*', arg)
@@ -66,131 +69,65 @@ class BlockOptimiser(object):
                 else: continue
                 if (arg_reg == subject):
                     indexes.append(i)
+        
         return indexes
 
 
     def reg_in(self, subject, args):
-        """ Returns true if the string is a substring of one of args[i] """
+        """ returns true if the string is a substring of one of args[i] """
+
         return (len(self.reg_indexes_in(subject, args)) > 0)
 
     
     def replace_reg(self, subject, arg):
-        """ Replaces register in arg with subject register """
+        """ replaces register in arg with subject register """
+
         return ir.Register(re.sub('\$\w*', str(subject), str(arg)))
 
 
     def find_constants(self, before = 0):
         """ 
-        Compiles a dict of (register,constant) pairs, with the constant
-        corresponding to the last value in the given register before the
-        ``before'' register. We can improve this function by keeping track of
-        constants, e.g. after moves.
+        compiles a dict of (register:constant) pairs, with the constant
+        corresponding to the last value in the given register prior to the
+        peephole[before] instruction
         
         """
+
         consts = {}
+
         for ins in self.peephole[0:before]:
             if isinstance(ins,Instr):
                 if ins.instr == 'li':
                     consts[ins.args[0].expr] = ins.args[1]
+
         return consts
 
 
     def suboptimisation(self):
-        """ Defined in subclass  """
+        """ defined in relevant optimisation subclass """
 
         pass
 
+
     def optimise(self):
-        """ If block assigned, runs sub-optimisation until exhausted. """
+        """ if block is present: runs sub-optimisation until no changes left """
 
         changed = False
+
         if not self.block: 
-            """ raise an exception here """
             return changed
+
         peeper = Peeper(self.block, self.p_size)
         optimised = False
+
         for peephole in peeper:
             self.peephole = peephole
             optimised = True
             while optimised:
                 optimised = self.suboptimisation()
                 changed = changed | optimised
+
         return changed
-
-
-
-class ConstantFold(BlockOptimiser):
-    """ Replaces arithmetic expression with only constants, with value """
-
-
-    def addu(self, i, ins, opt, consts):
-        """ 
-        Replaces addu instruction with value. Though not guaranteed to replicate
-        unsigned behaviour, should be ok for benchmarks (c.f. report)
-        Note: We take into account that addu's might include compile-time
-        immediate values, since we encountered that in the benchmark code. Addu
-        seems to incorporate addiu functionality since no addiu's were found in
-        the benchmark code.
-        
-        """    
-        optimised = opt
-        if ins.instr == 'addu':
-
-            arg1_is_reg = isinstance(ins.args[1],ir.Register)
-            arg2_is_reg = isinstance(ins.args[2],ir.Register)
-            none_reg = (not arg1_is_reg) & (not arg2_is_reg)
-            arg1_known_reg = False
-            arg2_known_reg = False
-            if arg1_is_reg:
-                arg1_known_reg = (self.reg_in(ins.args[1].expr, consts))
-            if arg2_is_reg:
-                arg2_known_reg = (self.reg_in(ins.args[2].expr, consts))
-            both_known_regs = arg1_known_reg & arg2_known_reg
-            c1 = None
-            c2 = None
-            optimised_this_time = True
-
-            if both_known_regs:
-                c1 = consts[ins.args[1].expr]
-                c2 = consts[ins.args[2].expr]
-            elif none_reg:
-                c1 = ins.args[1]
-                c2 = ins.args[2]
-            elif arg1_known_reg & (not arg2_is_reg):
-                c1 = consts[ins.args[1].expr]
-                c2 = ins.args[2]
-            elif arg2_known_reg & (not arg1_is_reg):
-                c1 = ins.args[1]
-                c2 = consts[ins.args[2].expr]
-            else:
-                optimised_this_time = False
-
-            if optimised_this_time:
-                if isinstance(c1,str):
-                    c1 = int(c1,0)
-                if isinstance(c2,str):
-                    c2 = int(c2,0)
-                fold = c1 + c2 
-                self.logger.debug(' being replaced... '+str(self.peephole[i]))
-                self.peephole[i] = Instr('li',[ins.args[0], hex(fold)])
-                self.logger.debug('new instruction: '+str(self.peephole[i]))
-                consts[self.peephole[i].args[0].expr] = self.peephole[i].args[1]
-                optimised = True
-                self.logger.debug('constant folded')
-                self.stats['cf'] += 1
-        return optimised
-
-
-    def suboptimisation(self):
-        """ if 2+ compile time constants, tries constant folding """
-        self.logger = logging.getLogger('ConstantFold')
-        optimised = False
-        for i, ins in enumerate(self.peephole):
-            if isinstance(ins,Instr):
-                consts = self.find_constants(i)
-                if len(consts) > 1:
-                    optimised = self.addu(i, ins, optimised, consts)
-        return optimised
 
 
 
@@ -307,22 +244,26 @@ class DeadCode(BlockOptimiser):
         """
         optimised = opt
         for i2, ins2 in enumerate(self.peephole[i+1:len(self.peephole)]):
+
             candidate_reg = ins.args[cand_reg_index]
             ins2_is_instruction = isinstance(ins,Instr)
             args = []
-            if ins2_is_instruction:
-                try:
-                    for arg in ins2.args:
-                        if isinstance(arg,str) | isinstance(arg,int) :
-                            args.append(arg)
-                        else:
-                            args.append(arg.expr)
-                except AttributeError:
-                    continue
+
             if not ins2_is_instruction:
                 continue
-            elif not self.reg_in(candidate_reg.expr, args):
+
+            try:
+                for arg in ins2.args:
+                    if isinstance(arg,str) | isinstance(arg,int) :
+                        args.append(arg)
+                    else:
+                        args.append(arg.expr)
+            except AttributeError:
                 continue
+
+            if not self.reg_in(candidate_reg.expr, args):
+                continue
+
             elif str(ins2.instr) in assign_to:
                 assigned_to_index = assign_to[str(ins2.instr)]
                 pre_args = args[0:assigned_to_index]
@@ -336,7 +277,9 @@ class DeadCode(BlockOptimiser):
                     self.logger.debug('instruction removed')
                     self.stats['dc'] += 1
                     return optimised
+                
             else: return optimised
+
         return optimised
 
 
@@ -352,4 +295,91 @@ class DeadCode(BlockOptimiser):
             elif str(ins.instr) in assign_to:
                 cand_reg_index = assign_to[str(ins.instr)]
                 optimised = self.subscan(i, ins, optimised, cand_reg_index)
+        return optimised
+
+
+
+class ConstantFold(BlockOptimiser):
+    """ 
+    replaces arithmetic instructions with only compile-time constants in
+    arguments, a load immediate instruction to assign the corresponding value to
+    the same target register 
+    
+    """
+
+
+    def addu(self, i, ins, opt, consts):
+        """ 
+        carries out constant folding on addu instructions; though not guaranteed
+        to replicate unsigned behaviour, this should be ok for our benchmarks
+        (c.f. report); note that addu's, as manifest in benchmark suite, seem to
+        incorporate addiu functionality since no addiu's are present, and at
+        least one instance of a compile-time value was found in the arguments of
+        an addu instruction, in the benchmark suite
+        
+        """    
+
+        optimised = opt
+
+        if ins.instr == 'addu':
+
+            arg1_is_reg = isinstance(ins.args[1],ir.Register)
+            arg2_is_reg = isinstance(ins.args[2],ir.Register)
+            none_reg = (not arg1_is_reg) & (not arg2_is_reg)
+            arg1_known_reg = False
+            arg2_known_reg = False
+
+            if arg1_is_reg:
+                arg1_known_reg = (self.reg_in(ins.args[1].expr, consts))
+            if arg2_is_reg:
+                arg2_known_reg = (self.reg_in(ins.args[2].expr, consts))
+
+            both_known_regs = arg1_known_reg & arg2_known_reg
+            c1 = None
+            c2 = None
+            optimised_this_time = True
+
+            if both_known_regs:
+                c1 = consts[ins.args[1].expr]
+                c2 = consts[ins.args[2].expr]
+            elif none_reg:
+                c1 = ins.args[1]
+                c2 = ins.args[2]
+            elif arg1_known_reg & (not arg2_is_reg):
+                c1 = consts[ins.args[1].expr]
+                c2 = ins.args[2]
+            elif arg2_known_reg & (not arg1_is_reg):
+                c1 = ins.args[1]
+                c2 = consts[ins.args[2].expr]
+            else:
+                optimised_this_time = False
+
+            if optimised_this_time:
+                if isinstance(c1,str):
+                    c1 = int(c1,0)
+                if isinstance(c2,str):
+                    c2 = int(c2,0)
+                fold = c1 + c2 
+                self.logger.debug(' being replaced... '+str(self.peephole[i]))
+                self.peephole[i] = Instr('li',[ins.args[0], hex(fold)])
+                self.logger.debug('new instruction: '+str(self.peephole[i]))
+                consts[self.peephole[i].args[0].expr] = self.peephole[i].args[1]
+                optimised = True
+                self.logger.debug('constant folded')
+                self.stats['cf'] += 1
+
+        return optimised
+
+
+    def suboptimisation(self):
+        """ tries to constant-fold if 2+ compile time constants present """
+
+        self.logger = logging.getLogger('ConstantFold')
+        optimised = False
+
+        for i, ins in enumerate(self.peephole):
+            if isinstance(ins,Instr):
+                consts = self.find_constants(i)
+                if len(consts) > 1:
+                    optimised = self.addu(i, ins, optimised, consts)
         return optimised
