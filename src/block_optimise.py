@@ -28,6 +28,7 @@ import math
 from peephole import Peephole, Peeper
 from uic import copy_prop_targets, copy_prop_unsafe, assign_to
 import logging
+from urc import j_thirty_one_regs, jal_regs
 
 
 class BlockOptimiser(object):
@@ -241,6 +242,11 @@ class DeadCode(BlockOptimiser):
     
     """
 
+
+    def j_thirty_one_present(self):
+        """ (unimplemented) returns true if a j$31 instruction is present """
+
+        pass
 
     def subscan(self, i, ins, opt, cand_reg_index):
         """ 
