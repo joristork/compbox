@@ -7,3 +7,9 @@ Note that, for all tests, we entered $100$ at both prompts for values in
 \input{sections/benchmark-results}
 
 \subsection{Discussion}
+While we performed dataflow analysis and liveness analysis, we could only 
+implement a basic optimalisation based on the liveness information. With more
+time, we could have gotten a huge performance boost using the gained data. We 
+produced a very nice framework for optimalisations: all essential data is
+gathered and optimalisations are done in a way that we can expand very easy. 
+Unfortunatly the optimalisations we implemented still need some finetuning.
