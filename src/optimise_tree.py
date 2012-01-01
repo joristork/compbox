@@ -20,7 +20,7 @@ def remove_notused(graph):
         if i != 0 and len(graph.get_in_edges(block)) == 0:
             for instr in block.instructions:
                 if type(instr) == Instr:
-                    block.instrucions.remove(instr)
+                    block.instructions.remove(instr)
             if len(block.instructions) == 0:
                 graph.remove_block(block)
             
