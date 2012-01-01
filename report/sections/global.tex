@@ -1,0 +1,131 @@
+\lstset{ %
+language=[mips]Assembler,         % the language of the code
+basicstyle=\footnotesize,         % the size of the fonts that are used for the code
+backgroundcolor=\color{white},    % choose the background color. You must add \usepackage{color}
+showspaces=false,                 % show spaces adding particular underscores
+showstringspaces=false,           % underline spaces within strings
+showtabs=false,                   % show tabs within strings adding particular underscores
+frame=single,                     % adds a frame around the code
+tabsize=2,                        % sets default tabsize to 2 spaces
+captionpos=b,                     % sets the caption-position to bottom
+breaklines=true,                  % sets automatic line breaking
+breakatwhitespace=false,          % sets if automatic breaks should only happen at whitespace
+}
+
+The flat module contains five different optimalisation functions that remove
+redundant code on a global basis. In this subsection we will elaborate on those 
+functions. These functions perform better when comments are removed so there is
+a function that removes all comments from the code. We decided to not lose 
+information in the assembly code.
+\subsubsection{Jump - code - Label}
+When there is a jump, every code that is between the jump and the label is 
+never reached. Thus: the instruction between a jump and a label can be removed.
+This function probably will not speed up the code, but can reduce
+lines in the assembly code.
+Example:
+\begin{lstlisting}
+    addu    $2,$3,4
+    lw      $3,60($fp)
+    j       $L4
+    mtc1    $2,$f0
+    div.d   $f0,$f0,$f2	
+$L6:
+    jal     random 
+\end{lstlisting}
+Becomes:
+\begin{lstlisting}
+    addu    $2,$3,4
+    lw      $3,60($fp)
+    j       $L4
+$L6:
+    jal	    random 
+\end{lstlisting}
+\subsubsection{Label - Label}
+When two labels placed directly after eachother, one of the two is redundant.
+The second label is removed and each jump in the code that jumps to the second 
+label is changed to jump to the first label. This function can reduce lines and
+basicblocks for later on in optimalisation. In combination with the jump 
+optimalisation "useless branches" this can potentially speed up the program.
+Example:
+\begin{lstlisting}
+    addu    $2,$3,4
+    lw      $3,60($fp)
+    bne     $2,$0,$L6
+    mtc1    $2,$f0
+    div.d   $f0,$f0,$f2	
+$L5:
+$L6:
+    jal	    random 
+\end{lstlisting}
+Becomes:
+\begin{lstlisting}
+    addu    $2,$3,4
+    lw      $3,60($fp)
+    bne     $2,$0,$L5
+    mtc1    $2,$f0
+    div.d   $f0,$f0,$f2	
+$L5:
+    jal     random 
+\end{lstlisting}
+\subsubsection{Label - Jump}
+If a jump comes directly after a label, both are redundant. We can remove both
+lines and adjust all control instructions that point to the label so that they
+point to the label the jump was pointing to. If this situation occurs, two
+lines of assembly can be removed and the program is optimised by removing one 
+jump.
+Example:
+\begin{lstlisting}
+    addu    $2,$3,4
+    bne     $2,$0,$L5
+    mtc1    $2,$f0
+$L5:
+    j       $L8
+$L6:
+    div.d   $f0,$f0,$f2	
+\end{lstlisting}
+Becomes:
+\begin{lstlisting}
+    addu    $2,$3,4
+    bne     $2,$0,$L8
+    mtc1    $2,$f0
+$L6:
+    div.d   $f0,$f0,$f2	
+\end{lstlisting}
+\subsubsection{Useless branch/jump}
+If a control function jumps to a label that comes directly after the jump/branch
+, the instruction can be removed. This results in a smaller assembly file and
+a faster program.
+Example:
+\begin{lstlisting}
+    addu    $2,$3,4
+    bne     $2,$0,$L6
+$L6:
+    div.d   $f0,$f0,$f2	
+\end{lstlisting}
+Becomes:
+\begin{lstlisting}
+    addu    $2,$3,4
+$L6:
+    div.d   $f0,$f0,$f2	
+\end{lstlisting}
+\subsubsection{Branch - Jump - Label}
+This function removes a jump when we find a branch - jump - label
+combination where the branch points to the label. We can optimise this
+by negating the brench, making it point to the jump adres and removing the
+label. This results in a smaller assembly file and
+a faster program.
+Example:
+\begin{lstlisting}
+    slt     $2,$2,$3
+    bne     $2,$0,$L6
+    j       $L4
+$L6:
+    jal     random
+\end{lstlisting}
+Becomes:
+\begin{lstlisting}
+    slt     $2,$2,$3
+    beq     $2,$0,$L4
+$L6:
+    jal     random
+\end{lstlisting}

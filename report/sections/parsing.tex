@@ -1,3 +1,16 @@
+\lstset{ %
+language=Python,                % the language of the code
+basicstyle=\footnotesize,       % the size of the fonts that are used for the code
+backgroundcolor=\color{white},  % choose the background color. You must add \usepackage{color}
+showspaces=false,               % show spaces adding particular underscores
+showstringspaces=false,         % underline spaces within strings
+showtabs=false,                 % show tabs within strings adding particular underscores
+frame=single,                   % adds a frame around the code
+tabsize=2,                      % sets default tabsize to 2 spaces
+captionpos=b,                   % sets the caption-position to bottom
+breaklines=true,                % sets automatic line breaking
+breakatwhitespace=false,        % sets if automatic breaks should only happen at whitespace
+}
 For instruction parsing we use Python Lex-Yacc (PLY), an implementation of Lex and Yacc for Python. The Lex part of PLY splits the source in \emph{tokens}, e.g. a \verb!COMMENT!, or a comma. These tokens are passed to Yacc, which finds hierarchical structure in them. When Yacc recognizes a certain pattern, a corresponding action is taken.
 
 \subsection{Lex}
@@ -55,3 +68,24 @@ We specified the structure of the assembly language according to the following g
 \end{grammar}
 
 Each expression is stored in a Python object of type \verb!Raw!, \verb!Label!, \verb!Comment!, \verb!Instr! or \verb!Register!.
+
+\subsection{Registers}
+To perform dataflow analysis and liveness analysis, we need to parse each 
+instruction to determine which registers are set and which registers are used. 
+All instructions have a different format, so they need to be parsed seperatly. 
+This process is done in the parse_instr module. When we run parse\_instr.parse,
+it parses each Instr object from the ir module and sets the register that the
+instructoin writes to, the registers that it needs, the offset for writing to 
+memory, and immidiate values. An example:
+\begin{lstlisting}
+if ins.instr == 'add':  
+    if len(ins.args) == 3:
+        self.gen = [ins.args[0]]
+        if self.is_reg(ins.args[2]):
+            self.need = [ins.args[1], ins.args[2]]
+        else: 
+            self.need = [ins.args[1]]
+            self.ival = ins.args[2]
+    else:
+        raise Exception("Invalid number of args for ins: ", ins.instr)   
+\end{lstlisting}
