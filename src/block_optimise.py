@@ -14,6 +14,7 @@ Description:
 
 
 from cfg import BasicBlock
+import re
 import ir
 from ir import Instr
 import math
@@ -52,6 +53,19 @@ class BlockOptimiser(object):
     def rename_temp_vars(self):
         """ Renames temporary variables until bb is in normal form."""
         pass
+
+    
+    def reg_within(self, subject, args):
+        """ Returns true if the string is a substring of one of args[i] """
+        found = False
+        for arg in args:
+            if isinstance(arg, str):
+                m = re.search('\$\w*', arg)
+                if m:
+                    arg_reg = m.group(0)
+                else: continue
+                found = found | (arg_reg == subject)
+        return found
 
 
     def find_constants(self, before = 0):
@@ -119,9 +133,9 @@ class ConstantFold(BlockOptimiser):
             arg1_known_reg = False
             arg2_known_reg = False
             if arg1_is_reg:
-                arg1_known_reg = (ins.args[1].expr in consts)
+                arg1_known_reg = (self.reg_within(ins.args[1].expr, consts))
             if arg2_is_reg:
-                arg2_known_reg = (ins.args[2].expr in consts)
+                arg2_known_reg = (self.reg_within(ins.args[2].expr, consts))
             both_known_regs = arg1_known_reg & arg2_known_reg
             c1 = None
             c2 = None
@@ -188,29 +202,33 @@ class CopyPropagation(BlockOptimiser):
                             args.append(arg)
                         else:
                             args.append(arg.expr)
+                copy_in_args = self.reg_within(copy.expr, args)
+                orig_in_args = self.reg_within(orig.expr, args)
                 if not isinstance(ins2, Instr):
                     continue
                 elif str(ins2.instr) not in copy_prop_targets:
                     unsafe = str(ins2.instr) in copy_prop_unsafe
-                    if unsafe & ((copy.expr in args) | (orig.expr in args)):
+                    if unsafe & (copy_in_args | orig_in_args):
                         return optimised
                     else: continue
-                elif copy.expr in args:
+                elif copy_in_args:
                     argsize = len(ins2.args)
-                    if copy.expr in args[1:argsize]:
+                    if self.reg_within(copy.expr, args[1:argsize]):
                         one = args[1:argsize].index(copy.expr) + 1
-                        self.logger.debug(' being replaced... '+str(self.peephole[i+1+i2]))
+                        msg = ' being replaced... '+str(self.peephole[i+1+i2])
+                        self.logger.debug(msg)
                         ins2.args[one] = orig
                         if args[1:argsize].count(copy.expr) == 2:
                             two=args[one+1:argsize].index(copy.expr)+one+1
                             ins2.args[two] = orig
                         self.peephole[i+1+i2] = ins2
-                        self.logger.debug('new instruction: '+str(self.peephole[i+1+i2]))
+                        msg = 'new instruction: '+str(self.peephole[i+1+i2])
+                        self.logger.debug(msg)
                         optimised = True
                         self.logger.debug('copy propagated')
                         self.stats['cp'] += 1
 
-                    if (copy.expr==args[0]) | (orig.expr in args[0]):
+                    if(copy.expr==args[0])|(self.reg_within(orig.expr,args[0])):
                         return optimised
                 else:
                     continue
@@ -264,13 +282,13 @@ class DeadCode(BlockOptimiser):
                     continue
             if not ins2_is_instruction:
                 continue
-            elif candidate_reg.expr not in args:
+            elif not self.reg_within(candidate_reg.expr, args):
                 continue
             elif str(ins2.instr) in assign_to:
                 assigned_to_index = assign_to[str(ins2.instr)]
                 pre_args = args[0:assigned_to_index]
                 post_args = args[assigned_to_index+1:len(args)]
-                if candidate_reg.expr in pre_args+post_args:
+                if self.reg_within(candidate_reg.expr,pre_args+post_args):
                     return optimised
                 else: 
                     self.logger.debug(' being removed... '+str(self.peephole[i]))
