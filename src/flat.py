@@ -37,13 +37,14 @@ def optimize_jump(instruction_list):
             if not clean:
                 break
                 
-    clean = False
-    while(not clean):
-        clean = True    
-        for i,instruction in enumerate(instruction_list):
-            clean = cvt(instruction, i, instruction_list)
-            if not clean:
-                break            
+    #Needs liveness analysis
+    #clean = False
+    #while(not clean):
+    #    clean = True    
+    #    for i,instruction in enumerate(instruction_list):
+    #        clean = cvt(instruction, i, instruction_list)
+    #        if not clean:
+    #            break            
     
     return instruction_list
 
@@ -170,8 +171,8 @@ def useless_brench(il):
     
 def brench_jump(il):
     """
-    This function removes a jump when we find a brench - jump - label
-    combination where the brench points to the label. We can optimize this
+    This function removes a jump when we find a branch - jump - label
+    combination where the branch points to the label. We can optimise this
     by negating the brench, making it point to the jump adres and removing the
     label.
     """
