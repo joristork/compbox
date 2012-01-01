@@ -14,6 +14,9 @@ import flat as flat_opt
 from asmyacc import parser
 from ir import Raw
 from cfg import CFG
+from dataflow import Dataflow
+from liveness import Liveness
+
 import block_optimise as b_opt
 
 
@@ -107,6 +110,9 @@ class Optimiser(object):
 
         for graphnr, graph in enumerate(graphs):
             self.logger.info('graph %d of %d' % (graphnr + 1, len(graphs)))
+
+            Dataflow(graph)
+            Liveness(graph)
 
             for blocknr, block in enumerate(graph.blocks):
             

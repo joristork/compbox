@@ -83,7 +83,7 @@ class Instruction(object):
             self.gen = [Register("$31"),Register("$2"),Register("$3")] #Return address and values
             #Reg $4,5,6,7 are registers that are used for fuction arguments.
             #it is not clear which one will be used.
-            self.need = [Register("$4"),Register("$5"),Register("$6"),Register("$7")]
+            self.need = [Register("$4"),Register("$5"),Register("$6"),Register("$7"),Register("$fp"), Register("$sp")]
         elif ins.instr == 'jr':
             if len(ins.args) == 1:
                 self.need = [ins.args[0]]
@@ -94,7 +94,7 @@ class Instruction(object):
             if len(ins.args) == 1:
                 #Reg $4,5,6,7 are registers that are used for fuction arguments.
                 #it is not clear which one will be used.
-                self.need = [ins.args[0],Register("$4"),Register("$5"),Register("$6"),Register("$7")]
+                self.need = [ins.args[0],Register("$4"),Register("$5"),Register("$6"),Register("$7"),Register("$fp"), Register("$sp")]
                 self.gen = [Register("$2"),Register("$3")] #Return values
             else:
                 raise Exception("Invalid number of args for ins: ", ins.instr)

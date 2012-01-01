@@ -137,6 +137,22 @@ class Liveness(object):
             for i in block.live_in_node:
                 print i                       
                 
+    def optimise(self):
+        for block in self.graph.blocks:
+            for ins in block.instructions:
+                if type(ins) == Instr and len(ins.gen) > 0 \
+                    and ins.id not in block.live_in_node \
+                    and not (self.comp_regs(ins.gen, block.liveout)) \
+                    and ins.instr not in ['jal','jalr']:
+                    block.instructions.remove(ins)
+                    
+    def comp_regs(self,a,b):
+        for reg in a:
+            for r in b:
+                if reg.expr == r.expr:
+                    return True
+        return False
+
 
 def main():
     # test code
