@@ -1,0 +1,63 @@
+Run python optimiser.py --help for instructions.
+
+
+python modules:
+
+asmlex:
+    assembly lexer
+
+asmyacc:
+    assembly parser
+
+block_optimise:
+    block-level optimisers. 
+    objects: 
+        Peephole: 
+            contains an iterable list of instructions; 
+        Peeper: 
+            tries to create required peepholes; 
+        BlockOptimiser: 
+            parent class for the various block-level optimisations;
+        and 
+        BlockOptimiser child classes: block level optimisations:
+            common subexpressions;
+            constant folding;
+            copy propagation;
+            dead code;
+            temporary variable renaming;
+            exchange independent statements;
+            algebraic transformations;
+            machine dependent transformations.
+
+cfg:
+    contains two classes:
+    BasicBlock: 
+        a basic block of instructions
+    CFG: 
+        control flow graph. The internal representation of the sequence of
+        instructions parsed from the assembly file.
+
+flat:
+    contains (global?) optimisation functions that operate on the parsed
+    instructions before they are inserted into a cfg (whilst they are "flat").
+
+ir:
+    defines the instruction types used in our cfgs. lists of identifiers
+    categorise instructions into semantically related subclasses.
+
+lex:
+    wrapper for the lex lexer generator
+
+optimise:
+    converts assembly source to internal representation; triggers optimisations
+    on internal representation; converts optimised internal representation back
+    to assembly source. 
+
+parsetab:
+    table module used by yacc wrapper
+
+test_*:
+    unittests
+
+yacc:
+    wrapper for the yacc parser generator
