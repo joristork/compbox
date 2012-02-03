@@ -15,6 +15,7 @@ from asmlex import tokens
 
 raise_on_error = False
 
+# comment na instr wordt genegeerd
 def p_expr(p):
     '''expr : raw
             | label
@@ -128,7 +129,7 @@ if __name__ == '__main__':
         for line in open(sys.argv[1], 'r').readlines():
            if not line.strip(): continue
            result = parser.parse(line)
-           print counter, result
+           print counter, repr(result)
            counter +=1
            #if counter % 50 == 0: raw_input('pres key')
         print 'errors: %d\n' % error_count 
