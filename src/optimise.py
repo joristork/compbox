@@ -241,7 +241,7 @@ def main():
         target_filename = args[0] + options.extension
 
     targetfile = open(target_filename, 'w')
-    logging.info('writing optimised assembly to file')
+    logger.info('writing optimised assembly to file')
     targetfile.writelines(opt.result())
     targetfile.close()
 
