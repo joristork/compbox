@@ -7,17 +7,17 @@
 from optparse import OptionParser
 import logging
 
-import parse_instr
-import optimise_tree
-import flat as flat_opt
+from optimisations import parse_instr
+from optimisations import optimise_tree
+from optimisations import flat as flat_opt
 
 from asmyacc import parser
 from ir import Raw
 from cfg import CFG
-from dataflow import Dataflow
-from liveness import Liveness
+from optimisations.dataflow import Dataflow
+from optimisations.liveness import Liveness
 
-import block_optimise as b_opt
+from optimisations import block_optimise as b_opt
 
 
 
