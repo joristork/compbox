@@ -1,0 +1,1 @@
+Deze bestanden zijn één keer door de optimiser geweest met option -t. Er is dus alleen parsing en code generation gedaan. De bestanden zijn vervolgens handmatig gecheckt op correctheid. Als nogmaals de optimiser met -t op de bestanden wordt uitgevoerd, moet het bestand gelijk blijven.

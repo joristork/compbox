@@ -1,17 +1,27 @@
 # Test of parsing en code generation correct is.
 
+import unittest
 import sys
 sys.path.append("../") 
 
 import optimise
 
-for sourcefilename in ('slalom.s.opt', 'acron.s.opt', 'clinpack.s.opt', 'pi.s.opt', 'whet.s.opt', 'dhrystone.s.opt'):
-    sourcefile = open(sourcefilename)
-    source = sourcefile.readlines()
-    sourcefile.close()
 
-    opt = optimise.Optimiser(source, 0, True)
+class TestNoOpt(unittest.TestCase):
 
-    opt.optimise()
+    def test_no_opt_bench(self):
+        path = 'nullsource/'
+        for sourcefilename in ('slalom.s.opt', 'acron.s.opt', 'clinpack.s.opt',
+                'pi.s.opt', 'whet.s.opt', 'dhrystone.s.opt'):
+            sourcefile = open(path + sourcefilename)
+            source = sourcefile.readlines()
+            sourcefile.close()
 
-    print source == opt.result()
+            opt = optimise.Optimiser(source, 0, True)
+
+            opt.optimise()
+
+            self.assertEqual(source, opt.result())
+
+if __name__ == '__main__':
+    unittest.main()
