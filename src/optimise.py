@@ -196,6 +196,9 @@ def main():
     parser.add_option("-o", "--optimisations", dest="optimisations", default=None,
             help="enable specific optimisations, default is all")
 
+    parser.add_option("-m", "--meld", action="store_true", dest="meld", default=False,
+            help="after optimising open meld to show diff")
+
     (options, args) = parser.parse_args()
 
     if len(args) != 1:
@@ -251,6 +254,11 @@ def main():
     logger.info('writing optimised assembly to file')
     targetfile.writelines(opt.result())
     targetfile.close()
+
+    if options.meld:
+        import subprocess
+        print args[0], target_filename
+        subprocess.call(['meld', args[0], target_filename], shell=False)
 
 if __name__ == '__main__':
     main()
