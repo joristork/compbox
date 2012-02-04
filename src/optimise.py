@@ -7,17 +7,16 @@
 from optparse import OptionParser
 import logging
 
-import parse_instr
-import optimise_tree
-import flat as flat_opt
-
 from asmyacc import parser
 from ir import Raw
 from cfg import CFG
+
 from dataflow import Dataflow
 from liveness import Liveness
-
 import block_optimise as b_opt
+import parse_instr
+import optimise_tree
+import flat as flat_opt
 
 
 
@@ -49,15 +48,16 @@ class Optimiser(object):
      
     """
     
-    def __init__(self, lines, verbosity = 0, test=False):
+    def __init__(self, lines, verbosity = 0, enabled_optimisations='abcdefghijkl'):
         """
         Convert expressions to IR.
         """
         
         self.verbosity = verbosity
-        self.stats = {'cp':0,'cf':0,'dc':0}
         self.logger = logging.getLogger('Optimiser')
-        self.test = test
+        self.enabled_optimisations = enabled_optimisations
+
+        self.stats = {'cp':0, 'cf':0, 'dc':0}
 
         self.logger.info('parsing assembly')
         # Parse assembly and store in flat.
@@ -65,6 +65,7 @@ class Optimiser(object):
         for line in lines:
             if not line.strip():
                 # We skip empty lines. We could also tell yacc to put them in a Raw.
+                # TODO: skippet yacc dit niet sowieso?
                 continue
             self.flat.append(parser.parse(line))
         self.flat = parse_instr.parse(self.flat)
@@ -85,26 +86,22 @@ class Optimiser(object):
         
         """
 
-        if not self.test:
+        if 'a' in self.enabled_optimisations:
             self.logger.info('optimising global control flow graph')
         
-        cfg = CFG(self.flat)
-        #if self.verbosity > 2:
-        #    cfg.cfg_to_diagram("allinstr_graph_before.png")    
-
-        if not self.test:
+            cfg = CFG(self.flat)
+            #if self.verbosity > 2:
+            #    cfg.cfg_to_diagram("allinstr_graph_before.png")    
+    
             optimise_tree.optimise(cfg)
-        #if self.verbosity > 2:
-        #    cfg.cfg_to_diagram("allinstr_graph_after.png")      
-        self.flat = cfg.cfg_to_flat()
-        
-        if not self.test:
+            #if self.verbosity > 2:
+            #    cfg.cfg_to_diagram("allinstr_graph_after.png")      
+            self.flat = cfg.cfg_to_flat()
+           
+        if 'b' in self.enabled_optimisations:
             self.logger.info('optimising flat (jumps and branches)')
             self.flat = flat_opt.optimise(self.flat)
         
-        
-         
-
 
         self.logger.info('splitting flat in frames')
         frames = split_frames(self.flat)
@@ -112,54 +109,55 @@ class Optimiser(object):
         graphs = [CFG(frame) for frame in frames]  
         
         
-        if not self.test:
-            self.logger.info('optimising blocks')    
+        self.logger.info('optimising blocks')    
 
-            for graphnr, graph in enumerate(graphs):
-                self.logger.info('graph %d of %d' % (graphnr + 1, len(graphs)))
+        for graphnr, graph in enumerate(graphs):
+            self.logger.info('graph %d of %d' % (graphnr + 1, len(graphs)))
 
-                Dataflow(graph)
-                l = Liveness(graph,self.verbosity)
+            #Dataflow(graph)
+            #l = Liveness(graph,self.verbosity)
+            #self.logger.info('Performing liveness optimalisation on graph')
+            #change = True
+            #while change:
+            #    l.analyse()
+            #    change = l.optimise()   
+                        
+            for blocknr, block in enumerate(graph.blocks):
+            
+                self.logger.debug('block %d of %d' % (blocknr + 1, len(graph.blocks)))
+               
+                cf_opt = b_opt.ConstantFold(block)
+                cp_opt = b_opt.CopyPropagation(block)
+                dc_opt = b_opt.DeadCode(block)
 
-                #self.logger.info('Performing liveness optimalisation on graph')
-                #change = True
-                #while change:
-                #    l.analyse()
-                #    change = l.optimise()   
-                            
-                for blocknr, block in enumerate(graph.blocks):
-                
-                    self.logger.debug('block %d of %d' % (blocknr + 1, len(graph.blocks)))
-                   
-                    cf_opt = b_opt.ConstantFold(block)
-                    cp_opt = b_opt.CopyPropagation(block)
-                    dc_opt = b_opt.DeadCode(block)
+                done = False
+                subopt_changes = False
+                i = 0
 
-                    done = False
-                    subopt_changes = False
-                    i = 0
+                while (not done):
+                    done = True
+                    i += 1
+                    self.logger.debug('\t pass '+str(i))
 
-                    while (not done):
-                        done = True
-                        i += 1
-                        self.logger.debug('pass '+str(i))
-
+                    if 'c' in self.enabled_optimisations:
                         subopt_changes = cf_opt.optimise()
-                        if subopt_changes:self.stats['cf'] += cf_opt.stats['cf']
+                        if subopt_changes: self.stats['cf'] += cf_opt.stats['cf']
                         done = done & (not subopt_changes)
 
+                    if 'd' in self.enabled_optimisations:
                         subopt_changes = cp_opt.optimise()
                         if subopt_changes:self.stats['cp'] += cp_opt.stats['cp']
                         done = done & (not subopt_changes)
-                        
+                    
+                    if 'e' in self.enabled_optimisations:
                         subopt_changes = dc_opt.optimise()
                         if subopt_changes:self.stats['dc'] += dc_opt.stats['dc']
                         done = done & (not subopt_changes)
 
         self.logger.info('basic-block peephole optimisations done:')
-        self.logger.info('\t\tconstant folds: %d' % (self.stats['cf']))
-        self.logger.info('\t\tcopy propagations: %d' % (self.stats['cp']))
-        self.logger.info('\t\tdead code removes: %d' % (self.stats['dc']))
+        self.logger.info('\t constant folds: %d' % (self.stats['cf']))
+        self.logger.info('\t copy propagations: %d' % (self.stats['cp']))
+        self.logger.info('\t dead code removes: %d' % (self.stats['dc']))
 
         self.logger.info('joining graphs to frames')
         frames = [graph.cfg_to_flat() for graph in graphs]
@@ -181,20 +179,22 @@ class Optimiser(object):
 def main():
     """ Parse command line args, init. optimiser and run optimisations. """
 
-
     usage = "usage: %prog [options] file"
     parser = OptionParser(usage)
+
     parser.add_option("-d", "--dest", dest="filename",
-                      help="save result in FILENAME, overrides -e, --extension")
+            help="save result in FILENAME, overrides -e, --extension")
     parser.add_option("-v", "--verbosity", dest="verbosity",
             help="set verbosity (0: critical, 1: error, 2: warning, 3: info, 4: debug)")
     parser.add_option("-e", "--extension", dest="extension",
             help="save result in source filename + EXTENSION")
-
     parser.add_option("-t", "--test", action="store_true", dest="test", default=False,
-                                                help="no optimisations, only parsing and code generation.")
+            help="no optimisations, only parsing and code generation. -o '' is equivalent.")
+    parser.add_option("-o", "--optimisations", dest="optimisations", default=None,
+            help="enable specific optimisations, default is all")
 
     (options, args) = parser.parse_args()
+    print options
     if len(args) != 1:
         parser.error('incorrect number of arguments')
 
@@ -203,6 +203,9 @@ def main():
 
     if not options.extension:
         options.extension = '.opt'
+
+    if options.test:
+        options.optimisations = ''
 
     logging_levels = {0: logging.CRITICAL,
                       1: logging.ERROR,
@@ -229,7 +232,7 @@ def main():
     except IOError:
         print('error: file not found: %s' % args[0])
         exit(1)
-    opt = Optimiser(sourcefile.readlines(), options.verbosity, options.test)
+    opt = Optimiser(sourcefile.readlines(), options.verbosity, options.optimisations)
     sourcefile.close()
     logger.info('sourcefile closed')
 
