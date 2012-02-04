@@ -48,14 +48,17 @@ class Optimiser(object):
      
     """
     
-    def __init__(self, lines, verbosity = 0, enabled_optimisations='abcdefghijkl'):
+    def __init__(self, lines, verbosity = 0, enabled_optimisations = None):
         """
         Convert expressions to IR.
         """
         
         self.verbosity = verbosity
         self.logger = logging.getLogger('Optimiser')
-        self.enabled_optimisations = enabled_optimisations
+        if enabled_optimisations == None:
+            self.enabled_optimisations = 'abcdefghijkl'
+        else:
+            self.enabled_optimisations = enabled_optimisations
 
         self.stats = {'cp':0, 'cf':0, 'dc':0}
 
@@ -194,7 +197,7 @@ def main():
             help="enable specific optimisations, default is all")
 
     (options, args) = parser.parse_args()
-    print options
+
     if len(args) != 1:
         parser.error('incorrect number of arguments')
 
@@ -206,6 +209,7 @@ def main():
 
     if options.test:
         options.optimisations = ''
+ 
 
     logging_levels = {0: logging.CRITICAL,
                       1: logging.ERROR,
