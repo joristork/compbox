@@ -1,8 +1,6 @@
 # Test of parsing en code generation correct is.
 
 import unittest
-import sys
-sys.path.append("../") 
 
 import optimise
 
@@ -10,7 +8,7 @@ import optimise
 class TestNoOpt(unittest.TestCase):
 
     def test_no_opt_bench(self):
-        path = 'nullsource/'
+        path = '../benchmarks/'
         for sourcefilename in ('slalom.s.null', 'acron.s.null', 'clinpack.s.null',
                 'pi.s.null', 'whet.s.null', 'dhrystone.s.null'):
             sourcefile = open(path + sourcefilename)

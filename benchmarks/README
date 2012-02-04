@@ -1,1 +1,3 @@
-Made with /home/spolstra/vertalerbouw/bin/xgcc -S source.c
+Bestanden *.s gemaakt met /home/spolstra/vertalerbouw/bin/xgcc -S source.c
+
+Bestanden *.s.null gemaakt met python optimise.py source.s -t
