@@ -6,7 +6,7 @@ import unittest
 
 # Import unittest modules here.
 
-from noopttest import *
+from test_no_opt import *
 
 
 unittest.main()
