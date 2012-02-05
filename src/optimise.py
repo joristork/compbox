@@ -4,6 +4,7 @@
 # optimise.py
 #
 
+import sys
 from optparse import OptionParser
 import logging
 
@@ -233,6 +234,7 @@ def main():
 
 
     logger = logging.getLogger('main')
+    logger.info(' '.join(sys.argv[1:]))
     logger.info('opening sourcefile')
     try:
         sourcefile = open(args[0], 'r')
