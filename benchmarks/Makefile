@@ -1,13 +1,12 @@
-CC=xgcc
-CFLAGS=-O0
+CC=/home/spolstra/vertalerbouw/bin/xgcc
 
 %.s: %.c
-	$(CC) $(CFLAGS) -S $<
+	$(CC) -S $<
 %.o: %.s
-	$(CC) $(CFLAGS) -c $<
+	$(CC) -c $<
 
 %: %.o
-	$(CC) $(CFLAGS) $<
+	$(CC) $<
 
 all: acron clinpack dhrystone pi slalom whet
 
