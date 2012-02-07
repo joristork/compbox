@@ -1,0 +1,4 @@
+#!/bin/bash     
+# Optimaliseer .s
+ssh jstork@sremote.science.uva.nl compbox/opt_sremote
+
