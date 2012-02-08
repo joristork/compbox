@@ -4,7 +4,7 @@ CC=/home/spolstra/vertalerbouw/bin/xgcc
 	$(CC) -c $<
 
 %: %.s
-	$(CC) -o $@ $<
+	- $(CC) -o $@ $<
 
 all: acron clinpack dhrystone pi slalom whet
 
