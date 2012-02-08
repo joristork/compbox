@@ -1,0 +1,8 @@
+#!/bin/bash
+./sync
+ssh sremote.science.uva.nl "cd compbox/benchmarks; cp *.s opt/"
+./sim
+ssh sremote.science.uva.nl "cd compbox/benchmarks/opt; rename .output .output.orig *.output"
+./opt
+./sim
+ssh sremote.science.uva.nl "cd compbox/benchmarks/opt; for file in *.output; do diff -q \$file \$file.orig; done"
