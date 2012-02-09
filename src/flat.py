@@ -124,8 +124,9 @@ def label_jump(ins, i, il):
         if (type(ins) == Label and
             type(il[i + 1]) == Instr and
             il[i + 1].instr == 'j'):
-                replace_label(il[i + 1].args[0], ins.expr, il)
+                old_label = il[i+1].args[0]
                 del il[i:i + 2]
+                replace_label(old_label, ins.expr, il)
                 clean = False
     return clean
     
@@ -143,6 +144,12 @@ def replace_label(new_label, old_label, il):
         if (type(ins) == Instr):
             while (old_label in ins.args):
                 ins.args[ins.args.index(old_label)] = new_label
+                   
+    for ins in il:
+        if type(ins) == Raw and old_label in ins.expr:
+            il.remove(ins)
+            print ins.expr
+ 
 
 def optimize_brench(instruction_list):
     instruction_list = brench_jump(instruction_list)

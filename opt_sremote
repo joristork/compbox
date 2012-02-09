@@ -1,4 +1,4 @@
 #!/bin/bash     
 # Optimaliseer .s vanaf sremote.
-rsh deze "cd compbox/benchmarks/; for file in *.s; do /bin/env python2.6 ../../src/optimise.py \$file -v 3; mv \$file.opt opt/\$file;  done"
+rsh deze "cd compbox/benchmarks/; for file in *.s; do /bin/env python2.6 ../src/optimise.py \$file -v 3; mv \$file.opt opt/\$file;  done"
 
