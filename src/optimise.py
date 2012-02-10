@@ -90,83 +90,104 @@ class Optimiser(object):
         
         """
 
-        if 'a' in self.enabled_optimisations:
-            self.logger.info('optimising global control flow graph')
-        
-            cfg = CFG(self.flat)
-            #if self.verbosity > 2:
-            #    cfg.cfg_to_diagram("allinstr_graph_before.png")    
-    
-            optimise_tree.optimise(cfg)
-            #if self.verbosity > 2:
-            #    cfg.cfg_to_diagram("allinstr_graph_after.png")      
-            self.flat = cfg.cfg_to_flat()
-           
-        if 'b' in self.enabled_optimisations:
-            self.logger.info('optimising flat (jumps and branches)')
-            self.flat = flat_opt.optimise(self.flat)
-        
 
-        self.logger.info('splitting flat in frames')
-        frames = split_frames(self.flat)
-        self.logger.info('creating graph for each frame')
-        graphs = [CFG(frame) for frame in frames]  
+        # top loop
         
-        
-        self.logger.info('optimising blocks')    
+        flat_orig = None
+        top_loop_counter = 0
+        while True:
+            if flat_orig == self.flat:
+                self.logger.info('optimisation is stable')
+                break
+            if top_loop_counter == 10000:
+                self.logger.warning('top loop limit reached (10000 iterations)')
+                break
+            flat_orig = self.flat[:]
+            top_loop_counter += 1
+            self.logger.info('top pass %s' % str(top_loop_counter))           
 
-        for graphnr, graph in enumerate(graphs):
-            self.logger.info('graph %d of %d' % (graphnr + 1, len(graphs)))
-
-            #Dataflow(graph)
-            #l = Liveness(graph,self.verbosity)
-            #self.logger.info('Performing liveness optimalisation on graph')
-            #change = True
-            #while change:
-            #    l.analyse()
-            #    change = l.optimise()   
-                        
-            for blocknr, block in enumerate(graph.blocks):
+            # a.
+            if 'a' in self.enabled_optimisations:
+                self.logger.info('optimising global control flow graph')
             
-                self.logger.debug('block %d of %d' % (blocknr + 1, len(graph.blocks)))
-               
-                cf_opt = b_opt.ConstantFold(block)
-                cp_opt = b_opt.CopyPropagation(block)
-                dc_opt = b_opt.DeadCode(block)
+                cfg = CFG(self.flat)
+                #if self.verbosity > 2:
+                #    cfg.cfg_to_diagram("allinstr_graph_before.png")    
+        
+                optimise_tree.optimise(cfg)
+                #if self.verbosity > 2:
+                #    cfg.cfg_to_diagram("allinstr_graph_after.png")      
+                self.flat = cfg.cfg_to_flat()
+              
+            # b. jump optimisations 
+            if 'b' in self.enabled_optimisations:
+                self.logger.info('optimising flat (jumps and branches)')
+                self.flat = flat_opt.optimise(self.flat)
+            
 
-                done = False
-                subopt_changes = False
-                i = 0
+            self.logger.info('splitting flat in frames')
+            frames = split_frames(self.flat)
+            self.logger.info('creating graph for each frame')
+            graphs = [CFG(frame) for frame in frames]  
+            
+            
+            self.logger.info('optimising blocks')    
 
-                while (not done):
-                    done = True
-                    i += 1
-                    self.logger.debug('\t pass '+str(i))
+            for graphnr, graph in enumerate(graphs):
+                self.logger.info('graph %d of %d' % (graphnr + 1, len(graphs)))
 
-                    if 'c' in self.enabled_optimisations:
-                        subopt_changes = cf_opt.optimise()
-                        if subopt_changes: self.stats['cf'] += cf_opt.stats['cf']
-                        done = done & (not subopt_changes)
+                #Dataflow(graph)
+                #l = Liveness(graph,self.verbosity)
+                #self.logger.info('Performing liveness optimalisation on graph')
+                #change = True
+                #while change:
+                #    l.analyse()
+                #    change = l.optimise()   
+                            
+                for blocknr, block in enumerate(graph.blocks):
+                
+                    self.logger.debug('block %d of %d' % (blocknr + 1, len(graph.blocks)))
+                   
+                    cf_opt = b_opt.ConstantFold(block)
+                    cp_opt = b_opt.CopyPropagation(block)
+                    dc_opt = b_opt.DeadCode(block)
 
-                    if 'd' in self.enabled_optimisations:
-                        subopt_changes = cp_opt.optimise()
-                        if subopt_changes:self.stats['cp'] += cp_opt.stats['cp']
-                        done = done & (not subopt_changes)
-                    
-                    if 'e' in self.enabled_optimisations:
-                        subopt_changes = dc_opt.optimise()
-                        if subopt_changes:self.stats['dc'] += dc_opt.stats['dc']
-                        done = done & (not subopt_changes)
+                    done = False
+                    subopt_changes = False
+                    i = 0
 
-        self.logger.info('basic-block peephole optimisations done:')
-        self.logger.info('\t constant folds: %d' % (self.stats['cf']))
-        self.logger.info('\t copy propagations: %d' % (self.stats['cp']))
-        self.logger.info('\t dead code removes: %d' % (self.stats['dc']))
+                    while (not done):
+                        done = True
+                        i += 1
+                        self.logger.debug('\t pass '+str(i))
+                   
+                        # c. constant folding
+                        if 'c' in self.enabled_optimisations:
+                            subopt_changes = cf_opt.optimise()
+                            if subopt_changes: self.stats['cf'] += cf_opt.stats['cf']
+                            done = done & (not subopt_changes)
 
-        self.logger.info('joining graphs to frames')
-        frames = [graph.cfg_to_flat() for graph in graphs]
-        self.logger.info('joining frames to flat')
-        self.flat = sum(frames, [])
+                        # d. copy propagation
+                        if 'd' in self.enabled_optimisations:
+                            subopt_changes = cp_opt.optimise()
+                            if subopt_changes:self.stats['cp'] += cp_opt.stats['cp']
+                            done = done & (not subopt_changes)
+                        
+                        # e. dead code removal
+                        if 'e' in self.enabled_optimisations:
+                            subopt_changes = dc_opt.optimise()
+                            if subopt_changes:self.stats['dc'] += dc_opt.stats['dc']
+                            done = done & (not subopt_changes)
+
+            self.logger.info('basic-block peephole optimisations done:')
+            self.logger.info('\t constant folds: %d' % (self.stats['cf']))
+            self.logger.info('\t copy propagations: %d' % (self.stats['cp']))
+            self.logger.info('\t dead code removes: %d' % (self.stats['dc']))
+
+            self.logger.info('joining graphs to frames')
+            frames = [graph.cfg_to_flat() for graph in graphs]
+            self.logger.info('joining frames to flat')
+            self.flat = sum(frames, [])
 
     
     def result(self):
