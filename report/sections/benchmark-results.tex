@@ -44,3 +44,25 @@ slalom  &$27254$            &$4675$               &$26950$            &$4466$   
 \caption{Results of test 2}
 \label{tab:test2}
 \end{table}
+\subsection{Test 3}
+After we were given the time to repair our code so that all optimalisations work
+correct, the new benchmarks are these:
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{l l l l l}
+\toprule
+         &original      &            &optimised    &             \\
+file     &cycles        &lines       &cycles       &lines\\
+\midrule
+acron    &$ 2549442 $   &$ 428 $     &$ 2477541 $  &$ 394 $             \\
+clinpack &$ 1510515 $   &$ 3743 $    &$ 1413400 $  &$ 3495 $             \\
+dhrys.   &$ 2885097 $   &$ 897 $     &$ 2654804 $  &$ 834 $             \\
+pi       &$ 1713926 $   &$ 130 $     &$ 1713819 $  &$ 128 $             \\
+slalom   &$ 2857176 $   &$ 4640 $    &$ 2856265 $  &$ 4340 $             \\
+whet     &$ 2833782 $   &$ 1040 $    &$ 2788955 $  &$ 1019 $             \\
+\bottomrule
+\end{tabular}
+\caption{Results of test 3}
+\label{tab:test3}
+\end{table}
