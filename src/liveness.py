@@ -169,10 +169,11 @@ class Liveness(object):
                     
                     if type(ins) == Instr:
 #                        if ins.instr == "lw":
-                            #print ins
-                            #print ins.gen 
-                            #print ins.need
-                        islive = len(ins.gen) == 0
+#                            print ins, i
+#                            print ins.gen 
+#                            print ins.need
+                        islive = len(ins.gen) == 0 or (
+                                ins.instr == "move" and self.comp_regs([Register('$sp'),Register('fp')], ins.args))
                         if ins.instr in ['jal','jalr']:
                             islive = True
                         # Check if this instruction writes to a register
