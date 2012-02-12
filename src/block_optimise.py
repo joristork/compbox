@@ -102,6 +102,9 @@ class BlockOptimiser(object):
             if isinstance(ins,Instr):
                 if ins.instr == 'li':
                     consts[ins.args[0].expr] = ins.args[1]
+                elif ins.instr == 'lw':
+                    if ins.args[0].expr in consts:
+                        del consts[ins.args[0].expr]
 
         return consts
 
@@ -417,7 +420,7 @@ class ConstantFold(BlockOptimiser):
                     c2 = int(c2,0)
                 fold = c1 + c2 
                 self.logger.debug(' being replaced... '+str(self.peephole[i]))
-                self.peephole[i] = Instr('li',[ins.args[0], hex(fold)])
+                self.peephole[i] = Instr('li',[ins.args[0], '0x%08x'%fold])
                 self.logger.debug('new instruction: '+str(self.peephole[i]))
                 consts[self.peephole[i].args[0].expr] = self.peephole[i].args[1]
                 optimised = True

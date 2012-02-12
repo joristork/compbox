@@ -1,0 +1,7 @@
+#!/bin/bash
+cd $HOME/compbox/benchmarks; cp *.s opt/
+$HOME/compbox/sim_joris
+cd $HOME/compbox/benchmarks/opt_joris; rename .output .output.orig *.output
+$HOME/compbox/opt_joris
+$HOME/compbox/sim_joris
+cd $HOME/compbox/benchmarks/opt; for file in *.output; do diff -q $file $file.orig; done

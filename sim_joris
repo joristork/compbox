@@ -1,4 +1,3 @@
 #!/bin/bash     
 # Compileer *.s.opt en simuleer.
-ssh jstork@sremote.science.uva.nl "cd compbox/benchmarks/opt; make; for f in acron clinpack dhrystone pi slalom whet; do ./\$f.sh; cat \$f.cycles | grep 'sim_cycle'; done "
-
+cd /home/jstork/compbox/benchmarks/opt; make; for f in acron clinpack dhrystone pi slalom whet; do ./$f.sh; cat $f.cycles | grep 'sim_cycle'; done
