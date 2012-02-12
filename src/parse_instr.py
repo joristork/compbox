@@ -1,7 +1,22 @@
+""" 
+File:         optimise.py
+Course:       Compilerbouw 2011
+Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
+
+
+Description:
+    This file contains all information about the different assembly 
+    instructions. When it is used to parse a flat list, all instruction objects
+    get a list that contains the register that are needed and another list with
+    the registers that are generated.
+
+
+"""
+
 from ir import *
 import re
 numreg = re.compile("^(\$[a-z]?)([0-9]+)$")
-Creg = re.compile("^([0-9]+)\((\$[A-Za-z0-9]+)\)$")
+Creg = re.compile("^([A-Za-z0-9\.\+]+)\((\$[A-Za-z0-9]+)\)$")
 
 def parse(flat):
     for ex in flat:
