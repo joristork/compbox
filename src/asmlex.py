@@ -1,9 +1,14 @@
-#
-# assembly lexer
-#
-# Run this module without arguments to use the interactive
-# lexer. Give a filename as argument to tokenise a file.
-#
+""" 
+File:         asmlex.py
+Course:       Compilerbouw 2011
+Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
+
+
+Description:
+    Run this module without arguments to use the interactive
+    lexer. Give a filename as argument to tokenise a file.
+
+"""
 
 import lex
 import sys

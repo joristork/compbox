@@ -1,3 +1,16 @@
+""" 
+File:         optimise.py
+Course:       Compilerbouw 2011
+Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
+
+
+Description:
+    This file contains two optimalisations that can be done on a graph:
+        - remove not used (removes all blocks that can't be reached)
+        - flatten (merges blocks so that there are less jumps)
+
+"""
+
 import cfg
 from ir import *
 

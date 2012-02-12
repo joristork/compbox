@@ -1,8 +1,15 @@
 #!/usr/bin/env python
+""" 
+File:         optimise.py
+Course:       Compilerbouw 2011
+Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
 
-#
-# optimise.py
-#
+
+Description:
+    This is the main file, were all the optimalisations are handled. 
+    User input is handled using a optionparser. 
+
+"""
 
 import sys
 from optparse import OptionParser
@@ -124,7 +131,7 @@ class Optimiser(object):
                 self.logger.info('optimising flat (jumps and branches)')
                 self.flat = flat_opt.optimise(self.flat)
             
-
+            self.flat = parse_instr.parse(self.flat)
             self.logger.info('splitting flat in frames')
             frames = split_frames(self.flat)
             self.logger.info('creating graph for each frame')

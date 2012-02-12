@@ -1,3 +1,14 @@
+""" 
+File:         liveness.py
+Course:       Compilerbouw 2011
+Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
+
+
+Description:
+    This module contains functions for liveness analysis and dead code removal
+    based on liveness information.
+
+"""
 from cfg import CFG, BasicBlock
 from ir import *
 import parse_instr
@@ -6,49 +17,34 @@ from itertools import izip
 
 class Liveness(object):
     def __init__(self, graph, verbosity=2):
+        """
+        Creates a liveness object that can do analysis and an optimalisation on a
+        graph.
+        """
         self.graph = graph
         self.verbosity = verbosity
-        #self.dataflow = False
-        #self.dataflow = dataflow_done()
-        #if self.dataflow:
-        #change = True
-        #while change:
-        #    self.analyse()
-        #    change = self.optimise()
-        #    print change
-        #self.analyse()
-        
-    def dataflow_done(self):
-        result = False
-        for block in self.graph.blocks:
-            if len(block.inset) > 0:
-                result = True
-                break
-        return result
+
     
     def analyse(self):
+        """
+        Creates the in and outs sets for each block using liveness analysis.
+        """
         atnode = []
         blocknames = []
         for block in self.graph.blocks:
             blocknames.append(block.name) 
-            #block.print_block()
             for i in xrange(1,len(block.instructions)):
                 if type(block.instructions[-i])==Instr:
-                    #print "1, ", block.instructions[-i]
                     needs = []
                     for reg in block.instructions[-i].need:
                         if type(reg)==Register:
                             needs.append(reg)
-                    #print "2, ", needs
                     for j in xrange(i + 1, len(block.instructions) + 1):
                         
                         if type(block.instructions[-j])==Instr:
-                            #print "3, ", block.instructions[-j]
                             for n in needs:
                                 for g in block.instructions[-j].gen:
-                                    #print "4, ", repr(g)
                                     if type(g)==Register and n.expr == g.expr:
-                                        #print "5, ", n, g, block.instructions[-j].id
                                         if block.instructions[-j].id not in block.live_in_node:
                                             block.live_in_node.append(block.instructions[-j].id)
                                             block.live_in_node_reg += block.instructions[-j].gen
@@ -61,12 +57,9 @@ class Liveness(object):
                             #registers that are not set in the block. They
                             #are in the in set of 
                             #the block.
-                    #print "6, ", block.live_in_node
-                    #print "7 (needs), ", needs
                     for n in needs:
                         if not self.reg_in_reglist(n, block.livein): #n.expr not in block.livein
                             block.livein.append(n)
-                    #print "8 (needs), ", block.livein
                     
 
               
@@ -103,6 +96,9 @@ class Liveness(object):
                         passednodes.append(succ.name)
                     
     def comp_reglist(self,a,b):
+        """
+        Checks is a register in list is is also in list b
+        """
         if len(a)!=len(b):
             return False
         
@@ -117,18 +113,26 @@ class Liveness(object):
         return True
     
     def remove_block_list(self,b,l):
+        """
+        Finds a block by name and removes it.
+        """
         for block in l:
             if block.name == b.name:
                 l.remove(block)
                 
     def reg_in_reglist(self,reg,reglist):
-        #print reg, reglist
+        """
+        Checks if a given register is available in a list
+        """
         for r in reglist:
             if r.expr == reg.expr:
                 return True
         return False
         
     def print_live(self):
+        """
+        Creates a printout for the analysis that can be understood by humans
+        """
         for block in self.graph.blocks:
             print "------------------------------------------------------------"
             block.print_block()
@@ -145,6 +149,9 @@ class Liveness(object):
                 print i                       
                 
     def optimise(self):
+        """
+        Does deadcode removal based on liveness data
+        """
         # Creates a reversed list and index from a list
         reverse_enumerate = lambda l: izip(xrange(len(l)-1, -1, -1), reversed(l))
         change = False
@@ -157,8 +164,14 @@ class Liveness(object):
                 out = block.liveout[:]
                 clean = True
                 # Reverse the instruction list and loop
+
                 for i,ins in reverse_enumerate(block.instructions):
+                    
                     if type(ins) == Instr:
+#                        if ins.instr == "lw":
+                            #print ins
+                            #print ins.gen 
+                            #print ins.need
                         islive = len(ins.gen) == 0
                         if ins.instr in ['jal','jalr']:
                             islive = True

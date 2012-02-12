@@ -1,9 +1,14 @@
-#
-# assembly parser
-#
-# Run this module without arguments to use the interactive
-# parser. Give a filename as argument to parse a file.
-#
+""" 
+File:         asmyacc.py
+Course:       Compilerbouw 2011
+Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
+
+
+Description:
+    Run this module without arguments to use the interactive
+    parser. Give a filename as argument to tokenise a file.
+
+"""
 
 import yacc
 import sys

@@ -202,6 +202,7 @@ class Instruction(object):
         global Creg
         if ins.instr == 'lb':
             if len(ins.args) == 2:
+                ins.args[1] = str(ins.args[1])
                 g = re.match(Creg, ins.args[1])
                 if g:
                     self.c = g.group(1)
@@ -214,6 +215,7 @@ class Instruction(object):
                        
         elif ins.instr == 'lbu':
             if len(ins.args) == 2:
+                ins.args[1] = str(ins.args[1])            
                 g = re.match(Creg, ins.args[1])
                 if g:
                     self.c = g.group(1)
@@ -226,6 +228,7 @@ class Instruction(object):
                  
         elif ins.instr == 'lh':
             if len(ins.args) == 2:
+                ins.args[1] = str(ins.args[1])            
                 g = re.match(Creg, ins.args[1])
                 if g:
                     self.c = g.group(1)
@@ -238,6 +241,7 @@ class Instruction(object):
                 
         elif ins.instr == 'lhu':
             if len(ins.args) == 2:
+                ins.args[1] = str(ins.args[1])            
                 g = re.match(Creg, ins.args[1])
                 if g:
                     self.c = g.group(1)
@@ -250,6 +254,7 @@ class Instruction(object):
                 
         elif ins.instr == 'lw':
             if len(ins.args) == 2:
+                ins.args[1] = str(ins.args[1])            
                 g = re.match(Creg, ins.args[1])
                 
                 if g:
@@ -263,6 +268,7 @@ class Instruction(object):
                  
         elif ins.instr == 'dlw':
             if len(ins.args) == 2:
+                ins.args[1] = str(ins.args[1])            
                 g = re.match(Creg, ins.args[1])
                 if g:
                     self.c = g.group(1)
@@ -282,6 +288,7 @@ class Instruction(object):
                 
         elif ins.instr == 'l.s':
             if len(ins.args) == 2:
+                ins.args[1] = str(ins.args[1])            
                 g = re.match(Creg, ins.args[1])
                 
                 if g:
@@ -295,6 +302,7 @@ class Instruction(object):
                 
         elif ins.instr == 'l.d':
             if len(ins.args) == 2:
+                ins.args[1] = str(ins.args[1])            
                 g = re.match(Creg, ins.args[1])
                 
                 if g:
@@ -308,6 +316,7 @@ class Instruction(object):
                 
         elif ins.instr == 'sb':   
             if len(ins.args) == 2:
+                ins.args[1] = str(ins.args[1])            
                 g = re.match(Creg, ins.args[1])
                 if g:
                     self.c = g.group(1)
@@ -320,6 +329,7 @@ class Instruction(object):
                   
         elif ins.instr == 'sbu':  
             if len(ins.args) == 2:
+                ins.args[1] = str(ins.args[1])
                 g = re.match(Creg, ins.args[1])
                 if g:
                     self.c = g.group(1)
@@ -332,6 +342,7 @@ class Instruction(object):
                                        
         elif ins.instr == 'sh':   
             if len(ins.args) == 2:
+                ins.args[1] = str(ins.args[1])
                 g = re.match(Creg, ins.args[1])
                 if g:
                     self.c = g.group(1)
@@ -344,6 +355,7 @@ class Instruction(object):
                                        
         elif ins.instr == 'shu':  
             if len(ins.args) == 2:
+                ins.args[1] = str(ins.args[1])            
                 g = re.match(Creg, ins.args[1])
                 if g:
                     self.c = g.group(1)
@@ -357,6 +369,7 @@ class Instruction(object):
                                         
         elif ins.instr == 'sw':   
             if len(ins.args) == 2:
+                ins.args[1] = str(ins.args[1])            
                 g = re.match(Creg, ins.args[1])
                 if g:
                     self.c = g.group(1)
@@ -369,6 +382,7 @@ class Instruction(object):
                                       
         elif ins.instr == 'dsw':  
             if len(ins.args) == 2:
+                ins.args[1] = str(ins.args[1])            
                 g = re.match(Creg, ins.args[1])
                 if g:
                     self.c = g.group(1)
@@ -381,6 +395,7 @@ class Instruction(object):
                                      
         elif ins.instr == 'dsz':  
             if len(ins.args) == 1:
+                ins.args[0] = str(ins.args[0])            
                 g = re.match(Creg, ins.args[0])
                 if g:
                     self.c = g.group(1)
@@ -392,6 +407,7 @@ class Instruction(object):
                                     
         elif ins.instr == 's.s':  
             if len(ins.args) == 2:
+                ins.args[1] = str(ins.args[1])            
                 g = re.match(Creg, ins.args[1])
                 if g:
                     self.c = g.group(1)
@@ -404,6 +420,7 @@ class Instruction(object):
                                          
         elif ins.instr == 's.d':  
             if len(ins.args) == 2:
+                ins.args[1] = str(ins.args[1])            
                 g = re.match(Creg, ins.args[1])
                 if g:
                     self.c = g.group(1)

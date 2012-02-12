@@ -1,7 +1,21 @@
-#
-# IR objects
-#
-# Reg $31 is a return register
+""" 
+File:         ir.py
+Course:       Compilerbouw 2011
+Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
+
+
+Description:
+    This module is responsible for the intermediate representation. Every line
+    assembly is transformed into a corresponding object.
+    
+    Objects:
+        - Instr (instructions)
+        - Register
+        - Raw (compiler code)
+        - Comment
+        - Label
+
+"""
 control_instructions = [
     'j',     #- jump.                                                           Used: j {label}. Needs: [], Gen: [] 
     'jal',   #- jump and link.                                                  Used: jal {function}. Needs: [], Gen: [$31] 
