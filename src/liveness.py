@@ -158,8 +158,10 @@ class Liveness(object):
                 clean = True
                 # Reverse the instruction list and loop
                 for i,ins in reverse_enumerate(block.instructions):
-                    if type(ins) == Instr and ins.instr not in ['jal','jalr']:
+                    if type(ins) == Instr:
                         islive = len(ins.gen) == 0
+                        if ins.instr in ['jal','jalr']:
+                            islive = True
                         # Check if this instruction writes to a register
                         # that is in the out set
                         for ins_gen in ins.gen:
@@ -173,7 +175,6 @@ class Liveness(object):
                         # because of list indexes we have to start optimalisation
                         # on this block over again.
                         if not islive:
-                            print "Removed: ", ins
                             del block.instructions[i]
                             clean = False
                             break
@@ -184,6 +185,7 @@ class Liveness(object):
                                 index, inlist = self.in_reglist(ins_need, out)
                                 if not inlist:
                                     out.append(ins_need)
+
         return change
                     
     def comp_regs(self,a,b):
@@ -195,7 +197,7 @@ class Liveness(object):
             for r in b:
                 if reg.expr == r.expr:
                     return True
-        return Falsei
+        return False
 
     def in_reglist(self, reg, l):
         """ 
