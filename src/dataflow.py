@@ -1,7 +1,16 @@
 from cfg import CFG, BasicBlock
 from ir import *
 import parse_instr
+""" 
+File:         dataflow.py
+Course:       Compilerbouw 2011
+Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
 
+
+Description:
+    Does dataflow analysis. No optimisations implemented yet.
+
+"""
 class Dataflow(object):
     def __init__(self, graph):
         self.graph = graph

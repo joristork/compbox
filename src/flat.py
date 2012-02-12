@@ -1,11 +1,18 @@
 #!/usr/bin/env python
+""" 
+File:         flat.py
+Course:       Compilerbouw 2011
+Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
 
+
+Description:
+    Does dataflow analysis. No optimisations implemented yet.
+
+"""
 from asmyacc import parser
 import sys
 from ir import *
 import re
-
-#test with: optimize([Instr("beq", ["2"]), Label("1"),Label("2"),Instr("j",["3"]),Instr("beq", ["2"]),Instr("beq", ["2"]),Instr("beq", ["2"]),Instr("beq", ["2"]),Instr("beq", ["2"]),Label("3")])
 
     
 def optimize_jump(instruction_list):
@@ -36,15 +43,6 @@ def optimize_jump(instruction_list):
             clean = label_jump(instruction, i, instruction_list)
             if not clean:
                 break
-                
-    #Needs liveness analysis
-    #clean = False
-    #while(not clean):
-    #    clean = True    
-    #    for i,instruction in enumerate(instruction_list):
-    #        clean = cvt(instruction, i, instruction_list)
-    #        if not clean:
-    #            break            
     
     return instruction_list
 
@@ -148,7 +146,6 @@ def replace_label(new_label, old_label, il):
     for ins in il:
         if type(ins) == Raw and old_label in ins.expr:
             il.remove(ins)
-            print ins.expr
  
 
 def optimize_brench(instruction_list):

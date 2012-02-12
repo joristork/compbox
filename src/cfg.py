@@ -1,11 +1,12 @@
 #!/usr/bin/env python
+""" 
+File:         cfg.py
+Course:       Compilerbouw 2011
+Author:       Joris Stork, Lucas Swartsenburg, Jeroen Zuiddam
 
-#
-# cfg.py
-#
-"""
 
-Control Flow Graph and Basic Block
+Description:
+    Contains the classes for Basicblocks and control flow graph objects
 
 """
 
