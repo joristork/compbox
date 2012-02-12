@@ -2,6 +2,7 @@ from cfg import CFG, BasicBlock
 from ir import *
 import parse_instr
 from dataflow import Dataflow
+from itertools import izip
 
 class Liveness(object):
     def __init__(self, graph, verbosity=2):
@@ -144,23 +145,68 @@ class Liveness(object):
                 print i                       
                 
     def optimise(self):
+        # Creates a reversed list and index from a list
+        reverse_enumerate = lambda l: izip(xrange(len(l)-1, -1, -1), reversed(l))
         change = False
+        # For each block in the graph
         for block in self.graph.blocks:
-            for ins in block.instructions:
-                if type(ins) == Instr and len(ins.gen) > 0 \
-                    and ins.id not in block.live_in_node \
-                    and not (self.comp_regs(ins.gen, block.liveout)) \
-                    and ins.instr not in ['jal','jalr']:
-                    block.instructions.remove(ins)
-                    change = True
+            clean = False
+            while not clean:
+                # Create a out list, containing all registers that are needed
+                # further in the graph
+                out = block.liveout[:]
+                clean = True
+                # Reverse the instruction list and loop
+                for i,ins in reverse_enumerate(block.instructions):
+                    if type(ins) == Instr and ins.instr not in ['jal','jalr']:
+                        islive = len(ins.gen) == 0
+                        # Check if this instruction writes to a register
+                        # that is in the out set
+                        for ins_gen in ins.gen:
+                            index, inlist = self.in_reglist(ins_gen, out)
+                            # If that is the case, this instruction is live
+                            # and the register in the outset can be removed
+                            if inlist:
+                                islive = True
+                                del out[index]
+                        # If the instructions isn't live, it can be removed and
+                        # because of list indexes we have to start optimalisation
+                        # on this block over again.
+                        if not islive:
+                            print "Removed: ", ins
+                            del block.instructions[i]
+                            clean = False
+                            break
+                        # If the instruction is live, the registers it uses need
+                        # to be added tot the out list. 
+                        else:
+                            for ins_need in ins.need:
+                                index, inlist = self.in_reglist(ins_need, out)
+                                if not inlist:
+                                    out.append(ins_need)
         return change
                     
     def comp_regs(self,a,b):
+        """ 
+        Checks if there is an item in list a that is also in
+        list b
+        """
         for reg in a:
             for r in b:
                 if reg.expr == r.expr:
                     return True
-        return False
+        return Falsei
+
+    def in_reglist(self, reg, l):
+        """ 
+        Checks if a register is in a registerlist and return a 
+        tuple containing a boolean and a index. 
+        """
+        for i, r in enumerate(l):
+            if type(reg) == Register and type(r) == Register and reg.expr == r.expr:
+                return (i, True)
+        return (0, False)
+
 
 
 def main():
@@ -178,8 +224,9 @@ def main():
     change = True
     while change:
         l.analyse()
-        change = l.optimise()      
-    l.print_live()
+        change = l.optimise()  
+    for ins in flat:
+        print ins
     #1d.print_sets()
     #d.get_reach(c.get_block("$L7"))
     
