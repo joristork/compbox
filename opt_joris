@@ -1,4 +1,4 @@
 #!/bin/bash     
 # Optimaliseer .s vanaf sremote.
-cd /home/jstork/compbox/benchmarks/; for file in *.s; do /bin/env python2.6 ../src/optimise.py $file -v 3 -o c; cp $file.opt opt/$file;  done
+cd /home/jstork/compbox/benchmarks/; for file in *.s; do /bin/env python2.6 ../src/optimise.py $file -v 3 -o abcdefghijkl; cp $file.opt opt/$file;  done
 

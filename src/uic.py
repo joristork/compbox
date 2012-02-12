@@ -31,13 +31,11 @@ assign_to = {
     'cvt'   :   0   ,  
     'c.s'   :   0   ,     
     'c.d'   :   0   , 
-    'divu'  :   0   ,
     'sub.u' :   0   ,
     'sub.d' :   0   ,
     'add.d' :   0   ,
     'div.d' :   0   ,
     'div.s' :   0   ,
-    'div'   :   0   ,
     'dlw'   :   0   ,
     'lb'    :   0   ,
     'l.s'   :   0   ,
@@ -51,10 +49,8 @@ assign_to = {
     'move'  :   0   ,
     'mov.d' :   0   ,
     'mov.s' :   0   ,
-    'mult'  :   0   , 
     'mult.s':   0   , 
     'mult.d':   0   , 
-    'multu' :   0   , 
     'neg.s' :   0   ,  
     'neg.d' :   0   ,
     'nor'   :   0   ,
@@ -73,6 +69,10 @@ assign_to = {
     'xor'   :   0   ,
     'xori'  :   0   
     }
+#    'div'   :   0   ,
+#    'divu'  :   0   ,
+#    'mult'  :   0   , 
+#    'multu' :   0   , 
 
 
 """ 
@@ -128,7 +128,7 @@ copy_prop_targets = [
     'lw',   #- load word 
     'l.s',  #- load single-precision FP 
     'l.d',  #- load double-precision FP 
-    'li'
+    'li',
     'move', # extra
     'mult.s',   #- SP multiply
     'mult.d',   #- DP multiply
